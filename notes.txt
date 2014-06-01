@@ -1,0 +1,15 @@
+* Earlier versions of Zsh (<4.2) will probably fail with the universal
+  script loader-extended.sh due to limitations to its execution stack.
+
+* When extended functions collect files with the utility "find", the
+  order of the files becomes different depending on their placement in
+  the filesystem. One may note that running tests from one directory to
+  another may differ.
+
+  It was thought that using the utility sort to sort out the results of
+  find will make things more consistent but adding sort to the system
+  will not only add more requirements to the implementation but will
+  also make things run slower.
+  
+  I decided to just extend a sorting implementation to another version
+  like RS0XS if that may really be required.

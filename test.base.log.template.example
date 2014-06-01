@@ -1,0 +1,460 @@
+(load.sh)           --
+(load.sh)           load load/01.sh
+(load/01.sh)        --
+(load/01.sh)        load load/01/01.sh
+(load/01/01.sh)     --
+(load/01.sh)        load ./scripts/b/load/01/02.sh
+(load/01/02.sh)     --
+(load.sh)           load ./scripts/a/load/01.sh A
+(load/01.sh)        -- A
+(load/01.sh)        load load/01/01.sh
+(load/01/01.sh)     --
+(load/01.sh)        load ./scripts/b/load/01/02.sh
+(load/01/02.sh)     --
+(load.sh)           load ../<BASE>/scripts/b/load/02.sh A B
+(load/02.sh)        -- A B
+(load.sh)           load <ABS>/scripts/b/load/02.sh A B C
+(load/02.sh)        -- A B C
+(load.sh)           load load/./../load/././02.sh A B C D
+(load/02.sh)        -- A B C D
+(load.sh)           load load//.///..////load///.//.///02.sh
+(load/02.sh)        --
+(load.sh)           load ./scripts/b/load/./../load/././02.sh A
+(load/02.sh)        -- A
+(load.sh)           load .//scripts///b////load///.//..///load////.///.//02.sh A B
+(load/02.sh)        -- A B
+(load.sh)           load ../<BASE>/scripts/b/load/./../load/././02.sh A B C
+(load/02.sh)        -- A B C
+(load.sh)           load ..//<BASE>///scripts/b////load///.//..///load////.///.//02.sh A B C D
+(load/02.sh)        -- A B C D
+(load.sh)           load <ABS>/scripts/b/load/./../load/././02.sh
+(load/02.sh)        --
+(load.sh)           load <ABS>//scripts///b////load///.//..///load////.///.//02.sh A
+(load/02.sh)        -- A
+(include.sh)        --
+(include.sh)        include include/01.sh
+(include/01.sh)     --
+(include/01.sh)     include include/./../include/././02.sh A B C D
+(include/02.sh)     -- A B C D
+(include/02.sh)     include .//scripts///b////include///.//..///include////.//.///03.sh A B
+(include/03.sh)     -- A B
+(include/03.sh)     include ..//<BASE>///scripts////b///include//.///..////include///.//.///04.sh A B C D
+(include/04.sh)     -- A B C D
+(include/04.sh)     include <ABS>/scripts/a/include/./../include/././01/01.sh
+(include/01/01.sh)  --
+(include/04.sh)     include <ABS>//scripts///b////include///.//..///include////.///.//01///02.sh A
+(include/01/02.sh)  -- A
+(include/02.sh)     include ../<BASE>/scripts/b/include/./../include/././04.sh A B C
+(include/01.sh)     include include//.///..////include///.//.///03.sh
+(include/01.sh)     include ./scripts/b/include/./../include/././04.sh A
+(include.sh)        include ./scripts/a/include/02.sh A
+(include.sh)        include ../<BASE>/scripts/b/include/03.sh A B
+(include.sh)        include <ABS>/scripts/b/include/04.sh A B C
+(call.sh)           --
+(call.sh)           call call/01.sh
+(call/01.sh)        --
+(call/01.sh)        call call/01/01.sh
+(call/01/01.sh)     --
+(call/01.sh)        call ./scripts/b/call/01/02.sh
+(call/01/02.sh)     --
+(call.sh)           call ./scripts/a/call/01.sh A
+(call/01.sh)        -- A
+(call/01.sh)        call call/01/01.sh
+(call/01/01.sh)     --
+(call/01.sh)        call ./scripts/b/call/01/02.sh
+(call/01/02.sh)     --
+(call.sh)           call ../<BASE>/scripts/b/call/02.sh A B
+(call/02.sh)        -- A B
+(call.sh)           call <ABS>/scripts/b/call/02.sh A B C
+(call/02.sh)        -- A B C
+(call.sh)           call call/./../call/././02.sh A B C D
+(call/02.sh)        -- A B C D
+(call.sh)           call call//.///..////call///.//.///02.sh
+(call/02.sh)        --
+(call.sh)           call ./scripts/b/call/./../call/././02.sh A
+(call/02.sh)        -- A
+(call.sh)           call .//scripts///b////call///.//..///call////.///.//02.sh A B
+(call/02.sh)        -- A B
+(call.sh)           call ../<BASE>/scripts/b/call/./../call/././02.sh A B C
+(call/02.sh)        -- A B C
+(call.sh)           call ..//<BASE>///scripts////b///call//.///..////call///.//.///02.sh A B C D
+(call/02.sh)        -- A B C D
+(call.sh)           call <ABS>/scripts/b/call/./../call/././02.sh
+(call/02.sh)        --
+(call.sh)           call <ABS>//scripts///b////call///.//..///call////.///.//02.sh A
+(call/02.sh)        -- A
+(loadx.sh)          --
+(loadx.sh)          loadx loadx/01.sh
+(loadx/01.sh)       --
+(loadx/01.sh)       loadx loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx.sh)          loadx loadx/0?.sh A
+(loadx/03.sh)       -- A
+(loadx/03.sh)       loadx loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx/02.sh)       -- A
+(loadx/02.sh)       loadx ./scripts/c/loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/01.sh)       -- A
+(loadx/01.sh)       loadx loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/04.sh)       -- A
+(loadx/04.sh)       loadx ./scripts/c/loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx.sh)          loadx -name loadx/0?.sh A B
+(loadx/03.sh)       -- A B
+(loadx/03.sh)       loadx loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx/02.sh)       -- A B
+(loadx/02.sh)       loadx ./scripts/c/loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/01.sh)       -- A B
+(loadx/01.sh)       loadx loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/04.sh)       -- A B
+(loadx/04.sh)       loadx ./scripts/c/loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx.sh)          loadx -regex loadx/0.\.sh A B C
+(loadx/03.sh)       -- A B C
+(loadx/03.sh)       loadx loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx/02.sh)       -- A B C
+(loadx/02.sh)       loadx ./scripts/c/loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/01.sh)       -- A B C
+(loadx/01.sh)       loadx loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/04.sh)       -- A B C
+(loadx/04.sh)       loadx ./scripts/c/loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx.sh)          loadx ./scripts/c/loadx/01.sh A B C D
+(loadx/01.sh)       -- A B C D
+(loadx/01.sh)       loadx loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx.sh)          loadx ./scripts/c/loadx/0?.sh
+(loadx/03.sh)       --
+(loadx/03.sh)       loadx loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx/02.sh)       --
+(loadx/02.sh)       loadx ./scripts/c/loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/01.sh)       --
+(loadx/01.sh)       loadx loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/04.sh)       --
+(loadx/04.sh)       loadx ./scripts/c/loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx.sh)          loadx -name ./scripts/c/loadx/0?.sh A
+(loadx/03.sh)       -- A
+(loadx/03.sh)       loadx loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx/02.sh)       -- A
+(loadx/02.sh)       loadx ./scripts/c/loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/01.sh)       -- A
+(loadx/01.sh)       loadx loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/04.sh)       -- A
+(loadx/04.sh)       loadx ./scripts/c/loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx.sh)          loadx -regex ./scripts/c/loadx/0.\.sh A B
+(loadx/03.sh)       -- A B
+(loadx/03.sh)       loadx loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx/02.sh)       -- A B
+(loadx/02.sh)       loadx ./scripts/c/loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/01.sh)       -- A B
+(loadx/01.sh)       loadx loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/04.sh)       -- A B
+(loadx/04.sh)       loadx ./scripts/c/loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx.sh)          loadx <ABS>/scripts/c/loadx/01.sh A B C
+(loadx/01.sh)       -- A B C
+(loadx/01.sh)       loadx loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx.sh)          loadx <ABS>/scripts/c/loadx/0?.sh A B C D
+(loadx/03.sh)       -- A B C D
+(loadx/03.sh)       loadx loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx/02.sh)       -- A B C D
+(loadx/02.sh)       loadx ./scripts/c/loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/01.sh)       -- A B C D
+(loadx/01.sh)       loadx loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/04.sh)       -- A B C D
+(loadx/04.sh)       loadx ./scripts/c/loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx.sh)          loadx -name <ABS>/scripts/c/loadx/0?.sh
+(loadx/03.sh)       --
+(loadx/03.sh)       loadx loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx/02.sh)       --
+(loadx/02.sh)       loadx ./scripts/c/loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/01.sh)       --
+(loadx/01.sh)       loadx loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/04.sh)       --
+(loadx/04.sh)       loadx ./scripts/c/loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx.sh)          loadx -regex <ABS>/scripts/c/loadx/0.\.sh A
+(loadx/03.sh)       -- A
+(loadx/03.sh)       loadx loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(loadx/02.sh)       -- A
+(loadx/02.sh)       loadx ./scripts/c/loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/01.sh)       -- A
+(loadx/01.sh)       loadx loadx/01/01.sh
+(loadx/01/01.sh)    --
+(loadx/04.sh)       -- A
+(loadx/04.sh)       loadx ./scripts/c/loadx/01/0?.sh
+(loadx/01/02.sh)    --
+(loadx/01/01.sh)    --
+(includex.sh)       --
+(includex.sh)       includex includex/01.sh
+(includex/01.sh)    --
+(includex/01.sh)    includex includex/02.sh
+(includex/02.sh)    --
+(includex/02.sh)    includex ./scripts/c/includex/03.sh
+(includex/03.sh)    --
+(includex/03.sh)    includex includex/0?.sh
+(includex/04.sh)    --
+(includex/04.sh)    includex ./scripts/c/includex/0?.sh
+(includex/04.sh)    includex ./scripts/c/includex/01/0?.sh
+(includex/01/02.sh) --
+(includex/01/01.sh) --
+(includex/03.sh)    includex includex/01/0?.sh
+(includex/02.sh)    includex ./scripts/c/includex/01/01.sh
+(includex/01.sh)    includex includex/01/01.sh
+(includex.sh)       includex includex/0?.sh A
+(includex.sh)       includex -name includex/0?.sh A B
+(includex.sh)       includex -regex includex/0.\.sh A B C
+(includex.sh)       includex ./scripts/c/includex/01.sh A B C D
+(includex.sh)       includex ./scripts/c/includex/0?.sh
+(includex.sh)       includex -name ./scripts/c/includex/0?.sh A
+(includex.sh)       includex -regex ./scripts/c/includex/0.\.sh A B
+(includex.sh)       includex <ABS>/scripts/c/includex/01.sh A B C
+(includex.sh)       includex <ABS>/scripts/c/includex/0?.sh A B C D
+(includex.sh)       includex -name <ABS>/scripts/c/includex/0?.sh
+(includex.sh)       includex -regex <ABS>/scripts/c/includex/0.\.sh A
+(callx.sh)          --
+(callx.sh)          callx callx/01.sh
+(callx/01.sh)       --
+(callx/01.sh)       callx callx/01/01.sh
+(callx/01/01.sh)    --
+(callx.sh)          callx callx/0?.sh A
+(callx/03.sh)       -- A
+(callx/03.sh)       callx callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx/02.sh)       -- A
+(callx/02.sh)       callx ./scripts/c/callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/01.sh)       -- A
+(callx/01.sh)       callx callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/04.sh)       -- A
+(callx/04.sh)       callx ./scripts/c/callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx.sh)          callx -name callx/0?.sh A B
+(callx/03.sh)       -- A B
+(callx/03.sh)       callx callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx/02.sh)       -- A B
+(callx/02.sh)       callx ./scripts/c/callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/01.sh)       -- A B
+(callx/01.sh)       callx callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/04.sh)       -- A B
+(callx/04.sh)       callx ./scripts/c/callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx.sh)          callx -regex callx/0.\.sh A B C
+(callx/03.sh)       -- A B C
+(callx/03.sh)       callx callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx/02.sh)       -- A B C
+(callx/02.sh)       callx ./scripts/c/callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/01.sh)       -- A B C
+(callx/01.sh)       callx callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/04.sh)       -- A B C
+(callx/04.sh)       callx ./scripts/c/callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx.sh)          callx ./scripts/c/callx/01.sh A B C D
+(callx/01.sh)       -- A B C D
+(callx/01.sh)       callx callx/01/01.sh
+(callx/01/01.sh)    --
+(callx.sh)          callx ./scripts/c/callx/0?.sh
+(callx/03.sh)       --
+(callx/03.sh)       callx callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx/02.sh)       --
+(callx/02.sh)       callx ./scripts/c/callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/01.sh)       --
+(callx/01.sh)       callx callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/04.sh)       --
+(callx/04.sh)       callx ./scripts/c/callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx.sh)          callx -name ./scripts/c/callx/0?.sh A
+(callx/03.sh)       -- A
+(callx/03.sh)       callx callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx/02.sh)       -- A
+(callx/02.sh)       callx ./scripts/c/callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/01.sh)       -- A
+(callx/01.sh)       callx callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/04.sh)       -- A
+(callx/04.sh)       callx ./scripts/c/callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx.sh)          callx -regex ./scripts/c/callx/0.\.sh A B
+(callx/03.sh)       -- A B
+(callx/03.sh)       callx callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx/02.sh)       -- A B
+(callx/02.sh)       callx ./scripts/c/callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/01.sh)       -- A B
+(callx/01.sh)       callx callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/04.sh)       -- A B
+(callx/04.sh)       callx ./scripts/c/callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx.sh)          callx <ABS>/scripts/c/callx/01.sh A B C
+(callx/01.sh)       -- A B C
+(callx/01.sh)       callx callx/01/01.sh
+(callx/01/01.sh)    --
+(callx.sh)          callx <ABS>/scripts/c/callx/0?.sh A B C D
+(callx/03.sh)       -- A B C D
+(callx/03.sh)       callx callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx/02.sh)       -- A B C D
+(callx/02.sh)       callx ./scripts/c/callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/01.sh)       -- A B C D
+(callx/01.sh)       callx callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/04.sh)       -- A B C D
+(callx/04.sh)       callx ./scripts/c/callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx.sh)          callx -name <ABS>/scripts/c/callx/0?.sh
+(callx/03.sh)       --
+(callx/03.sh)       callx callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx/02.sh)       --
+(callx/02.sh)       callx ./scripts/c/callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/01.sh)       --
+(callx/01.sh)       callx callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/04.sh)       --
+(callx/04.sh)       callx ./scripts/c/callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx.sh)          callx -regex <ABS>/scripts/c/callx/0.\.sh A
+(callx/03.sh)       -- A
+(callx/03.sh)       callx callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(callx/02.sh)       -- A
+(callx/02.sh)       callx ./scripts/c/callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/01.sh)       -- A
+(callx/01.sh)       callx callx/01/01.sh
+(callx/01/01.sh)    --
+(callx/04.sh)       -- A
+(callx/04.sh)       callx ./scripts/c/callx/01/0?.sh
+(callx/01/02.sh)    --
+(callx/01/01.sh)    --
+(mixed.sh)          --
+(mixed.sh)          load mixed/01.sh
+(mixed/01.sh)       --
+(mixed/01.sh)       load mixed/02.sh
+(mixed/02.sh)       --
+(mixed/02.sh)       include mixed/03.sh
+(mixed/03.sh)       --
+(mixed/03.sh)       call mixed/04.sh
+(mixed/04.sh)       --
+(mixed/04.sh)       load ./scripts/b/mixed/05.sh
+(mixed/05.sh)       --
+(mixed/05.sh)       include ./scripts/b/mixed/06.sh
+(mixed/06.sh)       --
+(mixed/06.sh)       call ./scripts/a/mixed/01.sh
+(mixed/01.sh)       --
+(mixed/01.sh)       load mixed/02.sh
+(mixed/02.sh)       --
+(mixed/02.sh)       include mixed/03.sh
+(mixed.sh)          include mixed/02.sh
+(mixed.sh)          call mixed/03.sh
+(mixed/03.sh)       --
+(mixed/03.sh)       call mixed/04.sh
+(mixed/04.sh)       --
+(mixed/04.sh)       load ./scripts/b/mixed/05.sh
+(mixed/05.sh)       --
+(mixed/05.sh)       include ./scripts/b/mixed/06.sh
+(mixed/06.sh)       --
+(mixed/06.sh)       call ./scripts/a/mixed/01.sh
+(mixed/01.sh)       --
+(mixed/01.sh)       load mixed/02.sh
+(mixed/02.sh)       --
+(mixed/02.sh)       include mixed/03.sh
+(mixed.sh)          load ./scripts/b/mixed/04.sh
+(mixed/04.sh)       --
+(mixed/04.sh)       load ./scripts/b/mixed/05.sh
+(mixed/05.sh)       --
+(mixed/05.sh)       include ./scripts/b/mixed/06.sh
+(mixed/06.sh)       --
+(mixed/06.sh)       call ./scripts/a/mixed/01.sh
+(mixed/01.sh)       --
+(mixed/01.sh)       load mixed/02.sh
+(mixed/02.sh)       --
+(mixed/02.sh)       include mixed/03.sh
+(mixed.sh)          include ./scripts/b/mixed/05.sh
+(mixed.sh)          call ./scripts/b/mixed/06.sh
+(mixed/06.sh)       --
+(mixed/06.sh)       call ./scripts/a/mixed/01.sh
+(mixed/01.sh)       --
+(mixed/01.sh)       load mixed/02.sh
+(mixed/02.sh)       --
+(mixed/02.sh)       include mixed/03.sh
+remaining parameters after finish: LOADER_ACTIVE LOADER_RS LOADER_VERSION

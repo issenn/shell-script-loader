@@ -1,0 +1,5 @@
+bash test.bash
+zsh test.zsh
+diff -u test.bash.log test.zsh.log
+cp test.bash.log test.base.log
+bash test-all.sh.example 2>&1 | tee out.log
