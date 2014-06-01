@@ -1,0 +1,109 @@
+TEST_CWD=''
+TEST_CWD_BASE=''
+TEST_LOADER_DIR=''
+TEST_LOADER_SCRIPT=''
+TEST_LOG_FD=4
+TEST_LOG_FILE=''
+TEST_SHELLCLASS=''
+
+
+test_() {
+	TEST_SHELLCLASS=$1
+
+	[ -z "$TEST_LOADER_DIR" ]    && TEST_LOADER_DIR=../shellscriptloader-0.1
+	[ -z "$TEST_LOADER_SCRIPT" ] && TEST_LOADER_SCRIPT=$TEST_LOADER_DIR/loader.$TEST_SHELLCLASS
+	[ -z "$TEST_LOG_FD" ]        && TEST_LOG_FD=10
+	[ -z "$TEST_LOG_FILE" ]      && TEST_LOG_FILE=test.$TEST_SHELLCLASS.log
+
+	echo "testing $TEST_SHELLCLASS..."
+
+	eval "exec $TEST_LOG_FD>\"$TEST_LOG_FILE\""
+
+	if
+		(
+			cd /bin || cd /usr/bin || cd /usr/local/bin || exit 1
+			__=$PWD
+			cd /lib || cd /usr/lib || cd /usr/local/lib || exit 1
+			[ ! "$__" = "$PWD" ]
+			exit "$?"
+		) >/dev/null 2>&1
+	then
+		if [ ! "$PWD" = `pwd` ]; then
+			echo "test: contents of variable PWD differs from output of `pwd`"
+			return 1
+		fi
+
+		TEST_CWD=$PWD
+	else
+		TEST_CWD=`pwd`
+	fi
+
+	[ -z "$TEST_CWD" ] && \
+		test_fail "unable to get current directory."
+
+	TEST_CWD_BASE=`echo "$TEST_CWD" | sed 's@^.*/@@'`
+
+	[ -z "$TEST_CWD_BASE" ] && \
+		test_fail "unable to get base name of $TEST_CWD_BASE"
+
+	[ ! -f "$TEST_LOADER_SCRIPT" ] && \
+		test_fail "loader script $TEST_LOADER_SCRIPT not found."
+
+	test_load "$TEST_LOADER_SCRIPT"
+
+	loader_addpath ./scripts/a ./scripts/b
+
+	test_load "./scripts/a/load.sh"
+	test_load "./scripts/a/include.sh"
+	test_load "./scripts/a/call.sh"
+	test_load "./scripts/b/mixed.sh"
+
+	loader_reset
+
+	loader_finish
+
+	test_log "remaining parameters after finish:" `set | grep -a -e '^loader_.*()' -e '^LOADER_.*=' | cut -f 1 -d = | sort`
+
+	if [ ! -f "test.base.log" ]; then
+		[ ! -f "test.base.log.template" ] && \
+			test_fail "test.base.log.template not found."
+
+		sed -e "s@<ABS>@$TEST_CWD@g; s@<BASE>@$TEST_CWD_BASE@" test.base.log.template > test.base.log || \
+			test_fail "unable to create test.base.log"
+	fi
+
+	diff -u "$TEST_LOG_FILE" test.base.log || \
+		test_fail "logfile $TEST_LOG_FILE differs from test.base.log."
+
+	echo "$TEST_SHELLCLASS ok."
+
+	return 0
+}
+
+test_load() {
+	__=$1; shift
+	. "$__"
+}
+
+test_log() {
+	echo "$@"
+	echo "$@" >&$TEST_LOG_FD
+}
+
+test_exec() {
+	test_log "$@"
+	shift
+	"$@"
+}
+
+test_twice() {
+	FILE=$1; shift
+	echo "file is being included twice: $FILE"
+	[ "$#" -gt 0 ] && echo "comment:" "$@"
+	exit 1
+}
+
+test_fail() {
+	echo "$@"
+	exit 1
+}

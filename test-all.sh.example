@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# This is an example script for making multiple tests on shellscriptloader's
+# scripts.  Please feel free to modify this file in any manner you like.
+
+SHELLS='bash bash-2.04 bash-2.05b bash-3.1 bash-3.2 bash-4.0 bash-4.1 bash-4.2 zsh-4.0.1 zsh-4.2.0 zsh-4.3.4 ksh pdksh ash heirloom-sh dash'
+
+test-all() {
+	for A in "$@"; do
+		for B in test.*sh; do
+			echo
+			echo "---- $A $B ----"
+			echo
+			if ! "$A" "$B"; then
+				echo "$B with $A failed."
+				read
+			fi
+			echo
+		done
+	done
+}
+
+eval "test-all $SHELLS"

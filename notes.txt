@@ -1,0 +1,2 @@
+* Earlier versions of Zsh (<4.2) will probably fail with the universal
+  script loader.sh due to limitations to its execution stack.
