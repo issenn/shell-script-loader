@@ -1,4 +1,4 @@
-#!/usr/bin/env gawk -f
+#!/usr/bin/gawk -f
 
 # ----------------------------------------------------------------------
 
@@ -125,7 +125,7 @@
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2013/10/11)
+# Aug. 29, 2009 (Last Updated 2014/06/04)
 
 # ----------------------------------------------------------------------
 
@@ -134,7 +134,7 @@
 
 function GLOBALS() {
 
-	compiler_version = "0.WP20131011"
+	compiler_version = "0.WP20140604"
 
 	compiler_defaultoutput   = "/dev/stdout"
 	compiler_callsobjfile    = "compiler.calls.obj"
