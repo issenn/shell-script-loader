@@ -12,20 +12,20 @@
 # emulation like not yet being able to recurse to call() and callx()
 # functions.  We know that call() summons file(s) inside a new
 # environment or subshell so implementing it needs very careful planning
-# and may cause heavy overhaul to the whole code.  One of difficult task
-# with respect to this is knowing the proper way to handle code on files
-# that are called after a call since virtually it should run to a new
-# subshell and therefore things like errors (may it be syntactical or
-# not) should be separated from the handling of the parent script.  One
-# of the solutions I currently thought on how to make this work is by
-# using double-indexed associative arrays on the virtual stacks that
+# and may cause heavy overhaul to the whole code.  One of the difficult
+# tasks with respect to this is knowing the proper way to handle code on
+# files that are called after a call since virtually it should run to a
+# new subshell and therefore things like errors (may it be syntactical
+# or not) should be separated from the handling of the parent script.
+# One of the solutions I currently thought on how to make this work is
+# by using double-indexed associative arrays on the virtual stacks that
 # increments everytime a new context is entered.  That may be the a good
 # solution but it may also cause a slight minus on runtime speed.  With
 # relation to the handling of errors, I probably can also solve it by
 # adding new options that may tell the compiler if it should bail out if
 # an error is found in a sub-context or not.  Timewise though, making
 # these changes will probably beat a lot of it and it's also not a
-# guarantee if these big changes will yield a stable code soon.  Also,
+# guarantee that these big changes will yield a stable code soon.  Also,
 # thinking that the current code is already about 97.0 to 99.5% stable
 # (as tests shows), I thought that it's better if I just make a new
 # release first than immediately starting to apply new changes to it.
@@ -121,12 +121,12 @@
 # To know some more info about using this script, run it with the option
 # '--usage' or '--help'.
 #
-# Version: 0.WP20141209 ( Working Prototype 2014/12/09
+# Version: 0.WP20141212 ( Working Prototype 2014/12/12
 #                         for RS0, RS0X, RS0L and RS0S )
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2014/12/09)
+# Aug. 29, 2009 (Last Updated 2014/12/12)
 
 # ----------------------------------------------------------------------
 
@@ -135,7 +135,7 @@
 
 function GLOBALS() {
 
-	compiler_version = "0.WP20141209"
+	compiler_version = "0.WP20141212"
 
 	compiler_default_output    = "/dev/stdout"
 	compiler_calls_obj_file    = "compiler.calls.obj"
@@ -495,7 +495,7 @@ function compiler \
 # Info Functions
 
 function compiler_show_info_and_usage() {
-	compiler_log_stderr("Prototype Compiler for shell scripts based on Shell Script Loader")
+	compiler_log_stderr("Prototype compiler for shell scripts based on Shell Script Loader")
 	compiler_log_stderr("Version: " compiler_version)
 	compiler_log_stderr("")
 	compiler_log_stderr("Usage Summary: compiler.gawk [option [optarg] [option2] ...] file [file2 ...]")
