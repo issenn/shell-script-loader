@@ -40,13 +40,16 @@
 # (a) #begin_skip_block - #end_skip_block /
 #     #begin_compiler_skip - #end_compiler_skip
 #
-#     Specifies that text will not be included from compilation.
+#     Specifies that text will not be included to the compiled file.
 #
-# (a) #begin_no_parse_block - #end_no_parse_block /
+# (b) #begin_no_parse_block - #end_no_parse_block /
 #     #begin_compiler_no_parse - #end_compiler_no_parse
 #
-#     Specifies that text will be include but not parsed or will just be
-#     treated as plain text.
+#     Specifies that text will be included but not parsed or will just
+#     be treated as plain text.
+#
+#     This also prevents lines beginning with '#' from being removed
+#     when comment stripping (--strip-c) is enabled.
 #
 # (c) #begin_no_indent_block - #end_no_indent_block /
 #     #begin_compiler_no_indent - #end_compiler_no_indent
@@ -54,7 +57,8 @@
 #     Specifies that text will not be indented when included inside call
 #     functions.
 #
-# Here are some scripts that's compatible with the compiler:
+# Here are some script examples that shows compatibility with the
+# compiler:
 #
 # ----------------------------------------
 #
@@ -63,17 +67,19 @@
 #  #begin_skip_block
 #  if [ "$LOADER_ACTIVE" = true ]; then
 #      # Shell Script Loader was not yet loaded from any previous
-#      # context. We'll load it here. The conditional expression above
+#      # context. We'll load it here.  The conditional expression above
 #      # is only optional and may be excluded if the script is intended
 #      # not to be called from call() or callx().
 #      . "<some path to>/loader.sh"
 #  else
 #  #end_skip_block
 #      # Include a command that will prevent using flags if this script
-#      # is called with call() or callx(). If the compiler sees this
+#      # is called with call() or callx().  If the compiler sees this
 #      # line, it should also reset the flags for this context but it's
-#      # currently not yet supported. This is also just optional and
+#      # currently not yet supported.  This is also just optional and
 #      # also depends on the intended on usage of the script.
+#      #
+#      # Currently this line is just excluded from compilation.
 #      loader_reset
 #  #begin_skip_block
 #  fi
@@ -121,12 +127,12 @@
 # To know some more info about using this script, run it with the option
 # '--usage' or '--help'.
 #
-# Version: 0.WP20141212 ( Working Prototype 2014/12/12
+# Version: 0.WP20160615 ( Working Prototype 2016/06/15
 #                         for RS0, RS0X, RS0L and RS0S )
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2014/12/12)
+# Aug. 29, 2009 (Last Updated 2016/06/15)
 
 # ----------------------------------------------------------------------
 
@@ -135,7 +141,7 @@
 
 function GLOBALS() {
 
-	compiler_version = "0.WP20141212"
+	compiler_version = "0.WP20160615"
 
 	compiler_default_output    = "/dev/stdout"
 	compiler_calls_obj_file    = "compiler.calls.obj"
@@ -397,7 +403,7 @@ function compiler \
 	compiler_keywords["end_compiler_no_parse"] = 1
 
 	compiler_keywords["BEGIN_NO_INDENT_BLOCK"] = 1
-	compiler_keywords["BEGIN_COMPILER_NO_INDENT"] = 1	
+	compiler_keywords["BEGIN_COMPILER_NO_INDENT"] = 1
 	compiler_keywords["END_NO_INDENT_BLOCK"] = 1
 	compiler_keywords["END_COMPILER_NO_INDENT"] = 1
 	compiler_keywords["BEGIN_SKIP_BLOCK"] = 1
@@ -435,23 +441,26 @@ function compiler \
 
 		compiler_log_message("strip: " compiler_complete_obj_file)
 
-		if (strip_comments) {
+		sed_args = "'/#begin_no_parse_block/,/#end_no_parse_block/b;/#begin_compiler_no_parse/,/#end_compiler_no_parse/b;'"
+
+		if (strip_comments)
 			sed_args = sed_args "'/^[[:blank:]]*#/d;'"
-		}
-		if (strip_trailing_comments) {
+
+		if (strip_trailing_comments)
 			sed_args = sed_args "'s/[[:blank:]]\\+#[^'\\''|&;]*$//;'"
-		}
-		if (strip_leading_spaces) {
+
+		if (strip_leading_spaces)
 			sed_args = sed_args "'s/^[[:blank:]]\\+//;'"
-		}
-		if (strip_trailing_spaces) {
+
+		if (strip_trailing_spaces)
 			sed_args = sed_args "'s/[[:blank:]]\\+$//;'"
-		}
+
 		if (sed_args) {
 			if (system("sed -i " sed_args " \"" compiler_complete_obj_file "\"") != 0) {
 				compiler_log_failure("Failed to strip object file with sed.")
 			}
 		}
+
 		if (strip_blank_lines) {
 			if (system("sed -i '/^$/d;' \"" compiler_complete_obj_file "\"") != 0) {
 				compiler_log_failure("Failed to strip object file with sed.")
@@ -549,7 +558,7 @@ function compiler_walk(file) {
 				compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
 	compiler_write_to_main_obj_comment("--------------------------------------------------")
-	compiler_write_to_main_obj_comment("(SOF) " file)
+	compiler_write_to_main_obj_comment("(BOF) " file)
 	compiler_write_to_main_obj_comment("--------------------------------------------------")
 
 	compiler_walk_stack_file[compiler_walk_stack_i]           = compiler_walk_current_file
@@ -592,17 +601,17 @@ function compiler_walk(file) {
 			} else if ($1 == "loader_finish" || $1 == "finishloader") {
 				# compiler_walk_finish()
 				;
-			} else if ($1 ~ /(begin_no_indent_block|BEGIN_NO_INDENT_BLOCK|begin_compiler_no_indent|BEGIN_COMPILER_NO_INDENT)/) {
+			} else if ($1 ~ /^#(begin_no_indent_block|BEGIN_NO_INDENT_BLOCK|begin_compiler_no_indent|BEGIN_COMPILER_NO_INDENT)$/) {
 				compiler_walk_no_indent_block_begin()
-			} else if ($1 ~ /(end_no_indent_block|END_NO_INDENT_BLOCK|end_compiler_no_indent|END_COMPILER_NO_INDENT)/) {
+			} else if ($1 ~ /^#(end_no_indent_block|END_NO_INDENT_BLOCK|end_compiler_no_indent|END_COMPILER_NO_INDENT)$/) {
 				compiler_walk_no_indent_block_end()
-			} else if ($1 ~ /(begin_skip_block|BEGIN_SKIP_BLOCK|begin_compiler_skip|BEGIN_COMPILER_SKIP)/) {
+			} else if ($1 ~ /^#(begin_skip_block|BEGIN_SKIP_BLOCK|begin_compiler_skip|BEGIN_COMPILER_SKIP)$/) {
 				compiler_walk_skip_block_begin()
-			} else if ($1 ~ /(end_skip_block|END_SKIP_BLOCK|end_compiler_skip|END_COMPILER_SKIP)/) {
+			} else if ($1 ~ /^#(end_skip_block|END_SKIP_BLOCK|end_compiler_skip|END_COMPILER_SKIP)$/) {
 				compiler_walk_skip_block_end()
-			} else if ($1 ~ /(begin_no_parse_block|BEGIN_NO_PARSE_BLOCK|begin_compiler_no_parse|BEGIN_COMPILER_NO_PARSE)/) {
+			} else if ($1 ~ /^#(begin_no_parse_block|BEGIN_NO_PARSE_BLOCK|begin_compiler_no_parse|BEGIN_COMPILER_NO_PARSE)$/) {
 				compiler_walk_no_parse_block_begin()
-			} else if ($1 ~ /(end_no_parse_block|END_NO_PARSE_BLOCK|end_compiler_no_parse|END_COMPILER_NO_PARSE)/) {
+			} else if ($1 ~ /^#(end_no_parse_block|END_NO_PARSE_BLOCK|end_compiler_no_parse|END_COMPILER_NO_PARSE)$/) {
 				compiler_walk_no_parse_block_end()
 			} else {
 				compiler_log_failure("Compiler failure: Entered invalid block in compiler_walk().")
@@ -1880,7 +1889,7 @@ function compiler_walk_no_indent_block_end_check() {
 function compiler_walk_skip_block_begin(  found_end_of_block, start_of_block_line_no) {
 	compiler_log_debug("compiler_walk_skip_block_begin() [ file = " compiler_walk_current_file ", line no = " compiler_walk_current_line_number "]")
 
-	compiler_write_to_main_obj_comment(compiler_walk_current_line)
+	compiler_write_to_main_obj(compiler_walk_current_line)
 
 	found_end_of_block = 0
 	start_of_block_line_no = compiler_walk_current_line_number
@@ -1898,7 +1907,7 @@ function compiler_walk_skip_block_begin(  found_end_of_block, start_of_block_lin
 		compiler_log_failure("End of skip block not found.",
 				compiler_walk_current_file, start_of_block_line_no)
 
-	compiler_write_to_main_obj_comment($0)
+	compiler_write_to_main_obj($0)
 }
 
 function compiler_walk_skip_block_end() {
@@ -1909,7 +1918,7 @@ function compiler_walk_skip_block_end() {
 function compiler_walk_no_parse_block_begin(  found_end_of_block, start_of_block_line_no) {
 	compiler_log_debug("compiler_walk_no_parse_block_begin() [ file = " compiler_walk_current_file ", line no = " compiler_walk_current_line_number "]")
 
-	compiler_write_to_main_obj_comment(compiler_walk_current_line)
+	compiler_write_to_main_obj(compiler_walk_current_line)
 
 	found_end_of_block = 0
 	start_of_block_line_no = compiler_walk_current_line_number
@@ -1917,21 +1926,17 @@ function compiler_walk_no_parse_block_begin(  found_end_of_block, start_of_block
 	while ((getline < compiler_walk_current_file) > 0) {
 		++compiler_walk_current_line_number
 
-		compiler_write_to_main_obj_comment($0)
+		compiler_write_to_main_obj($0)
 
-		if ($1 ~ /#(end_no_parse_block|END_NO_PARSE_BLOCK|end_compiler_no_parse|END_COMPILER_NO_PARSE)/) {
+		if ($1 ~ /#(end_no_parse_block|END_NO_PARSE_BLOCK|end_compiler_no_parse|END_COMPILER_NO_PARSE)$/) {
 			found_end_of_block = 1
 			break
 		}
-
-		compiler_write_to_main_obj($0)
 	}
 
 	if (!found_end_of_block)
 		compiler_log_failure("End of no parse block not found.",
 				compiler_walk_current_file, start_of_block_line_no)
-
-	compiler_write_to_main_obj_comment($0)
 }
 
 function compiler_walk_no_parse_block_end() {
@@ -2342,12 +2347,12 @@ function compiler_get_tokens_get_subtoken_size_doublequotes(string,   size, subt
 			gensub(/^[[:blank:]]+/, "", 1, compiler_walk_current_line))
 }
 
-function compiler_get_tokens_get_subtoken_size_ds_based(string, fromdoublequotes,   temp) {
+function compiler_get_tokens_get_subtoken_size_ds_based(string, from_doublequotes,   temp) {
 	compiler_log_debug("compiler_get_tokens_get_subtoken_size_ds_based(\"" string "\")")
 
 	# Specialized double quoted strings
 
-	if (!fromdoublequotes && match(string, /^(\$"(\\"|[^"])*"?)/, temp)) {
+	if (!from_doublequotes && match(string, /^(\$"(\\"|[^"])*"?)/, temp)) {
 		return temp[1, "length"]
 
 	# Specialized single quoted strings
@@ -2748,7 +2753,7 @@ function compiler_write_to_calls_obj(text) {
 
 function compiler_write_to_calls_obj_comment(text) {
 	if (!compiler_no_info) {
-		sub(/^(  )?/, "#:", text)
+		sub(/^/, "#:", text)
 		print text >> compiler_calls_obj_file
 	}
 }
@@ -2759,7 +2764,7 @@ function compiler_write_to_main_obj(text) {
 
 function compiler_write_to_main_obj_comment(text) {
 	if (!compiler_no_info) {
-		sub(/^(  )?/, "#:", text)
+		sub(/^/, "#:", text)
 		print text >> compiler_main_obj_file
 	}
 }
