@@ -127,12 +127,12 @@
 # To know some more info about using this script, run it with the option
 # '--usage' or '--help'.
 #
-# Version: 0.WP20160615 ( Working Prototype 2016/06/15
+# Version: 0.WP20160622 ( Working Prototype 2016/06/22
 #                         for RS0, RS0X, RS0L and RS0S )
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2016/06/15)
+# Aug. 29, 2009 (Last Updated 2016/06/22)
 
 # ----------------------------------------------------------------------
 
@@ -141,7 +141,7 @@
 
 function GLOBALS() {
 
-	compiler_version = "0.WP20160615"
+	compiler_version = "0.WP20160622"
 
 	compiler_default_output    = "/dev/stdout"
 	compiler_calls_obj_file    = "compiler.calls.obj"
@@ -389,31 +389,31 @@ function compiler \
 		compiler_keywords["loader_finish"] = 1
 	}
 
-	compiler_keywords["begin_no_indent_block"] = 1
-	compiler_keywords["begin_compiler_no_indent"] = 1
-	compiler_keywords["end_no_indent_block"] = 1
-	compiler_keywords["end_compiler_no_indent"] = 1
-	compiler_keywords["begin_skip_block"] = 1
-	compiler_keywords["begin_compiler_skip"] = 1
-	compiler_keywords["end_skip_block"] = 1
-	compiler_keywords["end_compiler_skip"] = 1
-	compiler_keywords["begin_no_parse_block"] = 1
-	compiler_keywords["begin_compiler_no_parse"] = 1
-	compiler_keywords["end_no_parse_block"] = 1
-	compiler_keywords["end_compiler_no_parse"] = 1
+	compiler_keywords["#begin_no_indent_block"] = 1
+	compiler_keywords["#begin_compiler_no_indent"] = 1
+	compiler_keywords["#end_no_indent_block"] = 1
+	compiler_keywords["#end_compiler_no_indent"] = 1
+	compiler_keywords["#begin_skip_block"] = 1
+	compiler_keywords["#begin_compiler_skip"] = 1
+	compiler_keywords["#end_skip_block"] = 1
+	compiler_keywords["#end_compiler_skip"] = 1
+	compiler_keywords["#begin_no_parse_block"] = 1
+	compiler_keywords["#begin_compiler_no_parse"] = 1
+	compiler_keywords["#end_no_parse_block"] = 1
+	compiler_keywords["#end_compiler_no_parse"] = 1
 
-	compiler_keywords["BEGIN_NO_INDENT_BLOCK"] = 1
-	compiler_keywords["BEGIN_COMPILER_NO_INDENT"] = 1
-	compiler_keywords["END_NO_INDENT_BLOCK"] = 1
-	compiler_keywords["END_COMPILER_NO_INDENT"] = 1
-	compiler_keywords["BEGIN_SKIP_BLOCK"] = 1
-	compiler_keywords["BEGIN_COMPILER_SKIP"] = 1
-	compiler_keywords["END_SKIP_BLOCK"] = 1
-	compiler_keywords["END_COMPILER_SKIP"] = 1
-	compiler_keywords["BEGIN_NO_PARSE_BLOCK"] = 1
-	compiler_keywords["BEGIN_COMPILER_NO_PARSE"] = 1
-	compiler_keywords["END_NO_PARSE_BLOCK"] = 1
-	compiler_keywords["END_COMPILER_NO_PARSE"] = 1
+	compiler_keywords["#BEGIN_NO_INDENT_BLOCK"] = 1
+	compiler_keywords["#BEGIN_COMPILER_NO_INDENT"] = 1
+	compiler_keywords["#END_NO_INDENT_BLOCK"] = 1
+	compiler_keywords["#END_COMPILER_NO_INDENT"] = 1
+	compiler_keywords["#BEGIN_SKIP_BLOCK"] = 1
+	compiler_keywords["#BEGIN_COMPILER_SKIP"] = 1
+	compiler_keywords["#END_SKIP_BLOCK"] = 1
+	compiler_keywords["#END_COMPILER_SKIP"] = 1
+	compiler_keywords["#BEGIN_NO_PARSE_BLOCK"] = 1
+	compiler_keywords["#BEGIN_COMPILER_NO_PARSE"] = 1
+	compiler_keywords["#END_NO_PARSE_BLOCK"] = 1
+	compiler_keywords["#END_COMPILER_NO_PARSE"] = 1
 
 	# Walk throughout.
 
