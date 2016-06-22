@@ -154,6 +154,7 @@ function GLOBALS() {
 	compiler_debug_mode        = 0
 	compiler_deprecated_mode   = 0
 	compiler_extended          = 0
+	compiler_find              = 0
 
 #	compiler_calls_funcnames[]
 #	compiler_calls_groupcallseeds[]
@@ -214,7 +215,7 @@ function compiler \
 			if (i == ARGC || length(b) == 0)
 				compiler_log_failure("This option requires an argument: " a)
 
-			if (! compiler_test("-d", b))
+			if (!compiler_test("-d", b))
 				compiler_log_failure("Directory not found:" b)
 
 			compiler_addpath(b)
@@ -224,6 +225,19 @@ function compiler \
 			compiler_deprecated_mode = 1
 		} else if (a == "-x" || a == "--extended") {
 			compiler_extended = 1
+		} else if (a == "-f" || a == "--find") {
+			b = ARGV[++i]
+
+			if (i == ARGC || length(b) == 0)
+				compiler_log_failure("This option requires an argument: " a)
+
+			if (!compiler_test("-f", b))
+				compiler_log_failure("File not found:" b)
+
+			if (!compiler_test("-x", b))
+				compiler_log_failure("File not executable:" b)
+
+			compiler_find = b
 		} else if (a == "-h" || a == "--help" || a == "--usage") {
 			compiler_show_info_and_usage()
 			exit(1)
@@ -233,7 +247,7 @@ function compiler \
 			if (i == ARGC || length(b) == 0)
 				compiler_log_failure("This option requires an argument: " a)
 
-			if (! compiler_test("-f", b))
+			if (!compiler_test("-f", b))
 				compiler_log_failure("Header file not found: " b)
 
 			header_file = b
@@ -319,7 +333,7 @@ function compiler \
 			if (i == ARGC || length(b) == 0)
 				compiler_log_failure("This option requires an argument: " a)
 
-			if (! compiler_test("-d", b))
+			if (!compiler_test("-d", b))
 				compiler_log_failure("Directory not found:" b)
 
 			compiler_temp_dir = b
@@ -346,7 +360,7 @@ function compiler \
 		output_file = compiler_default_output
 
 	if (output_file != "/dev/stdout" && output_file != "/dev/stderr")
-		if (! compiler_truncate_file(output_file))
+		if (!compiler_truncate_file(output_file))
 			compiler_log_failure("Unable to truncate output file \"" output_file "\".")
 
 	if (compiler_temp_dir) {
@@ -355,13 +369,13 @@ function compiler \
 		compiler_complete_obj_file = compiler_getabspath(compiler_temp_dir "/") compiler_complete_obj_file
 	}
 
-	if (! compiler_truncate_file(compiler_main_obj_file))
+	if (!compiler_truncate_file(compiler_main_obj_file))
 		compiler_log_failure("Unable to truncate main object file \"" compiler_main_obj_file "\".")
 
-	if (! compiler_truncate_file(compiler_calls_obj_file))
+	if (!compiler_truncate_file(compiler_calls_obj_file))
 		compiler_log_failure("Unable to truncate calls object file \"" compiler_calls_obj_file "\".")
 
-	if (! compiler_truncate_file(compiler_complete_obj_file))
+	if (!compiler_truncate_file(compiler_complete_obj_file))
 		compiler_log_failure("Unable to truncate complete object file \"" compiler_complete_obj_file "\".")
 
 	compiler_make_hash_initialize(1, 8)
@@ -376,6 +390,14 @@ function compiler \
 		compiler_keywords["loadx"] = 1
 		compiler_keywords["includex"] = 1
 		compiler_keywords["callx"] = 1
+
+		if (!compiler_find) {
+			"which find" | getline compiler_find
+
+			if (!length(compiler_find)) {
+				compiler_find = "find"
+			}
+		}
 	}
 
 	if (compiler_deprecated_mode) {
@@ -511,24 +533,28 @@ function compiler_show_info_and_usage() {
 	compiler_log_stderr("")
 	compiler_log_stderr("Options:")
 	compiler_log_stderr("")
-	compiler_log_stderr("-a,  --addpath [path]  Add a path to the search list.")
+	compiler_log_stderr("-a,  --addpath path    Add a path to the search list.")
 	compiler_log_stderr("     --debug           Enable debug mode.")
-	compiler_log_stderr("     --deprecated      Deprecated mode. Parse deprecated functions instead.")
-	compiler_log_stderr("-h,  --help|--usage    Show this message")
-	compiler_log_stderr("-H,  --header [file]   Insert a file at the top of the compiled form. This can")
+	compiler_log_stderr("     --deprecated      Deprecated mode.  Parse deprecated functions instead.")
+	compiler_log_stderr("-f,  --find path       Specifies the location of the 'find' utility.")
+	compiler_log_stderr("                       By default, it is the output of 'which find', or simply")
+	compiler_log_stderr("                       \"find\".  This is only useful with --extended.")
+	compiler_log_stderr("-h,  --help|--usage    Show this message.")
+	compiler_log_stderr("-H,  --header file     Insert a file at the top of the compiled form.  This can")
 	compiler_log_stderr("                       be used to insert program description and license info.")
 	compiler_log_stderr("-ia, --ignore-addpaths Ignore embedded addpath commands in scripts.")
 	compiler_log_stderr("-ir, --ignore-resets   Ignore embedded reset commands in scripts.")
 	compiler_log_stderr("-n,  --no-info         Do not add informative comments.")
-	compiler_log_stderr("-ni, --no-indent       Do not add extra alignment indents to contents when compiling.")
-	compiler_log_stderr("-o,  --output [file]   Use file for output instead of stdout.")
+	compiler_log_stderr("-ni, --no-indent       Do not add extra alignment indents to contents when")
+	compiler_log_stderr("                       compiling.")
+	compiler_log_stderr("-o,  --output file     Use file for output instead of stdout.")
 	compiler_log_stderr("-O                     Optimize. (enables --strip-all-safe, and --no-info)")
 	compiler_log_stderr("     --RS0             Parse commands based on RS0 (default).")
 	compiler_log_stderr("     --RS0X            Parse commands based on RS0X (--extended).")
 	compiler_log_stderr("     --RS0L            Parse commands based on RS0L (--deprecated).")
 	compiler_log_stderr("     --RS0S            Parse commands based on RS0S (--deprecated + --extended).")
 	compiler_log_stderr("     --sed             Use sed by default in some operations like stripping.")
-	compiler_log_stderr("-s,  --shell [path]    Includes a '#!<path>' header to the output.")
+	compiler_log_stderr("-s,  --shell path      Includes a '#!<path>' header to the output.")
 	compiler_log_stderr("     --strip-bl        Strip all blank lines.")
 	compiler_log_stderr("     --strip-c         Strip comments from code. (safe)")
 	compiler_log_stderr("     --strip-ebl       Strip extra blank lines. (safe)")
@@ -537,7 +563,7 @@ function compiler_show_info_and_usage() {
 	compiler_log_stderr("     --strip-ts        Strip trailing spaces in every line of the code. (safe)")
 	compiler_log_stderr("     --strip-all       Do all the strip methods mentioned above.")
 	compiler_log_stderr("     --strip-all-safe  Do all the safe strip methods mentioned above.")
-	compiler_log_stderr("     --tempdir [path]  Use a different directory for temporary files.")
+	compiler_log_stderr("     --tempdir path    Use a different directory for temporary files.")
 	compiler_log_stderr("-x,  --extended        Parse extended functions loadx(), includex() and callx().")
 	compiler_log_stderr("-V,  --version         Show version.")
 	compiler_log_stderr("")
@@ -553,7 +579,7 @@ function compiler_show_version_info() {
 function compiler_walk(file) {
 	compiler_log_message("walk: " file)
 
-	if (! compiler_test("-r", file))
+	if (!compiler_test("-r", file))
 		compiler_log_failure("File is not readable: " file,
 				compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
@@ -708,7 +734,7 @@ function compiler_walk_load \
 		}
 	} else {
 		for (i = 0; i < compiler_paths_count; i++) {
-			if (! compiler_test("-f", compiler_paths[i] "/" base))
+			if (!compiler_test("-f", compiler_paths[i] "/" base))
 				continue
 
 			abs = compiler_getabspath(compiler_paths[i] "/" base)
@@ -1036,7 +1062,7 @@ function compiler_walk_loadx \
 			}
 		} else {
 			for (i = 0; i < compiler_paths_count; i++) {
-				if (! compiler_test("-f", compiler_paths[i] "/" base))
+				if (!compiler_test("-f", compiler_paths[i] "/" base))
 					continue
 
 				abs = compiler_getabspath(compiler_paths[i] "/" base)
@@ -1074,15 +1100,15 @@ function compiler_walk_loadx \
 					compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
 		if (subprefix ~ /^\.?\.?\//) {
-			if (! compiler_test("-d", subprefix))
+			if (!compiler_test("-d", subprefix))
 				compiler_log_failure("Directory not found: " subprefix,
 						compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
-			if (! compiler_test("-x", subprefix))
+			if (!compiler_test("-x", subprefix))
 				compiler_log_failure("Directory is not accessible: " subprefix,
 						compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
-			if (! compiler_test("-r", subprefix))
+			if (!compiler_test("-r", subprefix))
 				compiler_log_failure("Directory is not searchable: " subprefix,
 						compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
@@ -1096,7 +1122,7 @@ function compiler_walk_loadx \
 
 			subprefix_quoted = compiler_gen_doublequotes_form(subprefix)
 
-			cmd = "find " subprefix_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
+			cmd = compiler_find " " subprefix_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
 
 			compiler_log_debug("cmd = " cmd)
 
@@ -1132,14 +1158,14 @@ function compiler_walk_loadx \
 
 				find_path = compiler_paths[i] "/" subprefix
 
-				if (! compiler_test("-d", find_path))
+				if (!compiler_test("-d", find_path))
 					continue
 
-				if (! compiler_test("-x", find_path))
+				if (!compiler_test("-x", find_path))
 					compiler_log_failure("Directory is not accessible: " find_path,
 							compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
-				if (! compiler_test("-r", find_path))
+				if (!compiler_test("-r", find_path))
 					compiler_log_failure("Directory is not searchable: " find_path,
 							compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
@@ -1153,7 +1179,7 @@ function compiler_walk_loadx \
 
 				find_path_quoted = compiler_gen_doublequotes_form(find_path)
 
-				cmd = "find " find_path_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
+				cmd = compiler_find " " find_path_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
 
 				compiler_log_debug("cmd = " cmd)
 
@@ -1346,15 +1372,15 @@ function compiler_walk_includex \
 					compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
 		if (subprefix ~ /^\.?\.?\//) {
-			if (! compiler_test("-d", subprefix))
+			if (!compiler_test("-d", subprefix))
 				compiler_log_failure("Directory not found: " subprefix,
 						compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
-			if (! compiler_test("-x", subprefix))
+			if (!compiler_test("-x", subprefix))
 				compiler_log_failure("Directory is not accessible: " subprefix,
 						compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
-			if (! compiler_test("-r", subprefix))
+			if (!compiler_test("-r", subprefix))
 				compiler_log_failure("Directory is not searchable: " subprefix,
 						compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
@@ -1368,7 +1394,7 @@ function compiler_walk_includex \
 
 			subprefix_quoted = compiler_gen_doublequotes_form(subprefix)
 
-			cmd = "find " subprefix_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
+			cmd = compiler_find " " subprefix_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
 
 			if ((cmd | getline filename) > 0) {
 				do {
@@ -1404,14 +1430,14 @@ function compiler_walk_includex \
 			for (i = 0; i < compiler_paths_count; i++) {
 				find_path = compiler_paths[i] "/" subprefix
 
-				if (! compiler_test("-d", find_path))
+				if (!compiler_test("-d", find_path))
 					continue
 
-				if (! compiler_test("-x", find_path))
+				if (!compiler_test("-x", find_path))
 					compiler_log_failure("Directory is not accessible: " find_path,
 							compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
-				if (! compiler_test("-r", find_path))
+				if (!compiler_test("-r", find_path))
 					compiler_log_failure("Directory is not searchable: " find_path,
 							compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
@@ -1425,7 +1451,7 @@ function compiler_walk_includex \
 
 				find_path_quoted = compiler_gen_doublequotes_form(find_path)
 
-				cmd = "find " find_path_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
+				cmd = compiler_find " " find_path_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
 
 				if ((cmd | getline filename) > 0) {
 					do {
@@ -1616,15 +1642,15 @@ function compiler_walk_callx \
 					compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
 		if (subprefix ~ /^\.?\.?\//) {
-			if (! compiler_test("-d", subprefix))
+			if (!compiler_test("-d", subprefix))
 				compiler_log_failure("Directory not found: " subprefix,
 						compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
-			if (! compiler_test("-x", subprefix))
+			if (!compiler_test("-x", subprefix))
 				compiler_log_failure("Directory is not accessible: " subprefix,
 						compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
-			if (! compiler_test("-r", subprefix))
+			if (!compiler_test("-r", subprefix))
 				compiler_log_failure("Directory is not searchable: " subprefix,
 						compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
@@ -1638,7 +1664,7 @@ function compiler_walk_callx \
 
 			subprefix_quoted = compiler_gen_doublequotes_form(subprefix)
 
-			cmd = "find " subprefix_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
+			cmd = compiler_find " " subprefix_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
 
 			if ((cmd | getline filename) > 0) {
 				prefix = compiler_getabspath(subprefix)
@@ -1677,14 +1703,14 @@ function compiler_walk_callx \
 			for (i = 0; i < compiler_paths_count; i++) {
 				find_path = compiler_paths[i] "/" subprefix
 
-				if (! compiler_test("-d", find_path))
+				if (!compiler_test("-d", find_path))
 					continue
 
-				if (! compiler_test("-x", find_path))
+				if (!compiler_test("-x", find_path))
 					compiler_log_failure("Directory is not accessible: " find_path,
 							compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
-				if (! compiler_test("-r", find_path))
+				if (!compiler_test("-r", find_path))
 					compiler_log_failure("Directory is not searchable: " find_path,
 							compiler_walk_current_file, compiler_walk_current_line_number, compiler_walk_current_line)
 
@@ -1698,7 +1724,7 @@ function compiler_walk_callx \
 
 				find_path_quoted = compiler_gen_doublequotes_form(find_path)
 
-				cmd = "find " find_path_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
+				cmd = compiler_find " " find_path_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
 
 				if ((cmd | getline filename) > 0) {
 					prefix = compiler_getabspath(find_path)
@@ -1766,7 +1792,7 @@ function compiler_walk_addpath(  argc, argv, i, path, tokenc, tokenv) {
 	for (i = 1; i < argc; i++) {
 		path = compiler_remove_quotes(argv[i])
 
-		if (! compiler_test("-d", path)) {
+		if (!compiler_test("-d", path)) {
 			compiler_log_failure("Directory not found: " path ", cwd: " compiler_getcwd(),
 					compiler_walk_current_file, compiler_walk_current_line_number, $1 " " path)
 
@@ -1952,7 +1978,7 @@ function compiler_addpath(path) {
 
 	path = compiler_getabspath(path "/.")
 
-	if (! (path in compiler_paths_flags)) {
+	if (!(path in compiler_paths_flags)) {
 		compiler_paths[compiler_paths_count++] = path
 		compiler_paths_flags[path] = 1
 	}
@@ -2211,7 +2237,7 @@ function compiler_get_tokens(string, tokenv,   i, temp, token, tokenc) {
 
 			string = temp[1]
 
-			if (! length(string))
+			if (!length(string))
 				break
 		}
 
@@ -2470,7 +2496,7 @@ function compiler_get_tokens_get_subtoken_size_ds_based_command_substitution(str
 			size = size + temp[1, "length"]
 			string = temp[2]
 
-			if (! length(string))
+			if (!length(string))
 				break
 		}
 
