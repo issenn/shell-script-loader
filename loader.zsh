@@ -11,13 +11,13 @@
 # Please see loader.txt for more info on how to use this script.
 #
 # This script complies with the Requiring Specifications of
-# Shell Script Loader version 0 (RS0)
+# Shell Script Loader version 0 (RS0).
 #
-# Version: 0.1
+# Version: 0.1.2
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2011/04/07)
+# Aug. 29, 2009 (Last Updated 2016/06/22)
 
 # Notes:
 #
@@ -34,10 +34,10 @@
 # scope.
 #
 # This implementation script for Zsh actually is also tested to be
-# functionally compatible with versions 4.0.* and 4.1.* but these
+# functionally compatible with versions 4.0.* and 4.1.*, but these
 # earlier versions of Zsh have limited execution stack (job tables) that
 # are sometimes configured by default at small sizes and are also not
-# expandable unlike in 4.2.* and newer so I thought that it's better to
+# expandable unlike in 4.2.* and newer, so I thought that it's better to
 # exclude these versions just to keep integrity.
 #
 # If you know what you're doing you may change the conditional
@@ -76,7 +76,7 @@ fi
 #### PUBLIC VARIABLES ####
 
 typeset -g LOADER_ACTIVE=true
-typeset -g LOADER_VERSION=0.1
+typeset -g LOADER_VERSION=0.1.2
 typeset -g LOADER_RS=0
 
 
@@ -295,7 +295,7 @@ function loader_load {
 	loader_load_ "$@"
 
 	__=$?
-	LOADER_CS[LOADER_CS_I--]=()
+	[[ LOADER_CS_I -gt 0 ]] && LOADER_CS[LOADER_CS_I--]=()
 	return "$__"
 }
 

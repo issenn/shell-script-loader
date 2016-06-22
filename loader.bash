@@ -5,11 +5,11 @@
 
 # loader.bash
 #
-# This script implements Shell Script Loader for all versions of bash
+# This script implements Shell Script Loader for all versions of Bash
 # starting 2.04.
 #
 # The script works faster with associative arrays.  To use associative
-# arrays, run the script with bash 4.2 or newer.  You can also enable
+# arrays, run the script with Bash 4.2 or newer.  You can also enable
 # usage of associative arrays with 4.0 or 4.1 by including it globally;
 # that is, not include the script with 'source' or '.' inside any
 # function.
@@ -17,18 +17,18 @@
 # Please see loader.txt for more info on how to use this script.
 #
 # This script complies with the Requiring Specifications of
-# Shell Script Loader version 0 (RS0)
+# Shell Script Loader version 0 (RS0).
 #
-# Version: 0.1
+# Version: 0.1.2
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2011/04/08)
+# Aug. 29, 2009 (Last Updated 2016/06/22)
 
 # Limitations of Shell Script Loader with integers and associative
 # arrays:
 #
-# With versions of bash earlier than 4.2, a variable can't be declared
+# With versions of Bash earlier than 4.2, a variable can't be declared
 # global with the use of 'typeset' and 'declare' builtins when inside a
 # function.  With Shell Script Loader, shell scripts are always loaded
 # inside functions so variables that can only be declared using the said
@@ -36,7 +36,7 @@
 # that cannot be declared global are the newer types like associative
 # arrays and integers.  Unlike Zsh, we can add '-g' as an option to
 # 'typeset' or 'declare' to declare global variables but we can't do
-# that in bash.
+# that in Bash.
 #
 # For example, if we do something like
 #
@@ -373,7 +373,7 @@ function loader_fail {
 		echo "loader: ${FUNC}(): ${MESSAGE}"
 		echo
 
-		echo "  current scope:"
+		echo '  current scope:'
 		if [[ LOADER_CS_I -gt 0 ]]; then
 			echo "    ${LOADER_CS[LOADER_CS_I - 1]}"
 		else
@@ -382,35 +382,29 @@ function loader_fail {
 		echo
 
 		if [[ $# -gt 0 ]]; then
-			echo "  command:"
+			echo '  command:'
 			echo -n "    $FUNC"
-			for A; do
-				echo -n " \"$A\""
-			done
+			printf ' %q' "$@"
 			echo
 			echo
 		fi
 
 		if [[ LOADER_CS_I -gt 0 ]]; then
-			echo "  call stack:"
+			echo '  call stack:'
 			echo "    $MAIN"
-			for A in "${LOADER_CS[@]}"; do
-				echo "    -> $A"
-			done
+			printf '    -> %s\n' "${LOADER_CS[@]}"
 			echo
 		fi
 
-		echo "  search paths:"
+		echo '  search paths:'
 		if [[ ${#LOADER_PATHS[@]} -gt 0 ]]; then
-			for A in "${LOADER_PATHS[@]}"; do
-				echo "    $A"
-			done
+			printf '    %s\n' "${LOADER_PATHS[@]}"
 		else
-			echo "    (empty)"
+			echo '    (empty)'
 		fi
 		echo
 
-		echo "  working directory:"
+		echo '  working directory:'
 		echo "    $PWD"
 		echo
 	} >&2
@@ -478,8 +472,7 @@ else
 	}
 
 	function loader_resetflags {
-		local IFS=' '
-		unset ${!LOADER_FLAGS_*}
+		unset "${!LOADER_FLAGS_@}"
 	}
 
 	function loader_resetpaths {

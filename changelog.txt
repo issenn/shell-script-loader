@@ -1,4 +1,25 @@
 -----
+0.1.2
+-----
+
+Fixed instances of `\"$__\"` which should be `\"\$__\"`.  It caused
+some scripts to be seen as not readable and not load when 'loader.sh' is
+loaded with advanced shells like Bash and Zsh.
+
+All advanced shell functions now use `[[ ]]` instead of `[ ]` for
+consistency.
+
+Simplified `[ ! ... ] &&` to `[ ... ] ||` in a getabspath function.
+
+We now check LOADER_CS_I if it's still set and has value > 0 before
+unsetting the element in LOADER_CS since Zsh gives an error if it's no
+longer set.  It happens when loader_finish is called in a called script.
+
+Now using "${!VAR_@}" instead of IFS=' ' and ${!VAR_*}.
+
+Now using 'printf' instead of 'echo' in a 'for' loop when applicable.
+
+-----
 0.1.1
 -----
 
@@ -12,10 +33,10 @@ Fixed detection of the optional external command getabspath.  This time
 also, it will only be used if the newly added internal function doesn't
 work for the shell.
 
-No other changes were made in the other scripts.
+No changes were made in other scripts.
 
 ---
 0.1
 ---
 
-First Presentable Release
+First presentable release.

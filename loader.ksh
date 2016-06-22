@@ -11,13 +11,13 @@
 # Please see loader.txt for more info on how to use this script.
 #
 # This script complies with the Requiring Specifications of
-# Shell Script Loader version 0 (RS0)
+# Shell Script Loader version 0 (RS0).
 #
-# Version: 0.1
+# Version: 0.1.2
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2011/04/08)
+# Aug. 29, 2009 (Last Updated 2016/06/22)
 
 # Limitations of Shell Script Loader in PD KSH:
 #
@@ -58,7 +58,7 @@ fi
 
 LOADER_ACTIVE=true
 LOADER_RS=0
-LOADER_VERSION=0.1
+LOADER_VERSION=0.1.2
 
 
 #### PRIVATE VARIABLES ####

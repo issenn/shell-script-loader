@@ -6,33 +6,33 @@
 # loader.sh
 #
 # This is a generic/universal implementation of Shell Script Loader
-# that targets all shells based from sh.
+# that targets all shells based on sh.
 #
 # Please see loader.txt for more info on how to use this script.
 #
 # This script complies with the Requiring Specifications of
 # Shell Script Loader version 0 (RS0).
 #
-# Version: 0.1.1
+# Version: 0.1.2
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2011/07/14)
+# Aug. 29, 2009 (Last Updated 2016/06/22)
 
 # Note:
 #
 # Some shells or some shell versions may not not have the full
 # capability of supporting Shell Script Loader.  For example, some
 # earlier versions of Zsh (earlier than 4.2) have limitations to the
-# number of levels or recursions that its functions and/or commands that
-# can be actively executed.
+# number of levels or recursions that its functions and/or commands can
+# actively execute.
 
 # ----------------------------------------------------------------------
 
 
 #### PUBLIC VARIABLES ####
 
-LOADER_VERSION=0.1.1
+LOADER_VERSION=0.1.2
 LOADER_RS=0
 LOADER_ACTIVE=true
 
@@ -294,8 +294,7 @@ if [ -n "$BASH_VERSION" ]; then
 				}
 
 				function loader_resetflags {
-					local IFS=\ ;
-					unset ${!LOADER_FLAGS_*}
+					unset "${!LOADER_FLAGS_@}"
 				}
 
 				function loader_resetpaths {
@@ -303,8 +302,7 @@ if [ -n "$BASH_VERSION" ]; then
 				}
 
 				function loader_unsetvars {
-					local IFS=\ ;
-					unset LOADER_CS LOADER_CS_I LOADER_PATHS ${!LOADER_FLAGS_*}
+					unset LOADER_CS LOADER_CS_I LOADER_PATHS "${!LOADER_FLAGS_@}"
 				}
 			'
 		fi
@@ -811,7 +809,7 @@ if [ "$LOADER_ADVANCED" = true ]; then
 
 		loader_findfile() {
 			for __ in \"\${LOADER_PATHS[@]}\"; do
-				if [ -f \"\$__/\$1\" ]; then
+				if [[ -f \$__/\$1 ]]; then
 					loader_getabspath \"\$__/\$1\"
 					return 0
 				fi
@@ -852,7 +850,7 @@ if [ "$LOADER_ADVANCED" = true ]; then
 
 					return 0
 				elif [[ -f \$__ ]]; then
-					[ -r \"$__\" ] || loader_fail \"found file not readable: \$__\" loader_include_loop \"\$@\"
+					[[ -r \$__ ]] || loader_fail \"found file not readable: \$__\" loader_include_loop \"\$@\"
 
 					loader_flag_ \"\$1\"
 
@@ -875,7 +873,7 @@ if [ "$LOADER_ADVANCED" = true ]; then
 
 			__=\$?
 
-			LOADER_CS[LOADER_CS_I--]=
+			[[ LOADER_CS_I -gt 0 ]] && LOADER_CS[LOADER_CS_I--]=
 
 			return \"\$__\"
 		}
@@ -1064,7 +1062,7 @@ else
 
 			case \"\$1\" in
 			*/)
-				[ ! \"$__\" = / ] && __=\$__/
+				[ \"\$__\" = / ] || __=\$__/
 				;;
 			*)
 				[ \"\$__\" = / ] && __=/.
