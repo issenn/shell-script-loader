@@ -10,7 +10,7 @@ Shell Script Loader Extended version 0X (RS0X).
 
 Document Version
 
-0X.1
+0X.1.2
 
 
 Definitions
@@ -281,14 +281,14 @@ if loader_finish() was already called.
 (c) LOADER_ACTIVE - This is set to 'true' if Shell Script Loader is
                     already loaded and is still active (not yet removed
                     with loader_finish()).  The variable should be unset
-                    if Loader was not yet loaded and set to 'false' if
-                    it is no longer active.
+                    if the implementation script was not yet loaded, and
+                    set to 'false' if it is no longer active.
 
 
 Compilers
 
 Shell Script Loader was also designed so that the scripts that were
-created based from it can also be compiled to form a single script.
+created based on it can also be compiled to form a single script.
 
 As of this writing, a working compiler is already available.  You can
 check the site where this program originally came for available
@@ -327,4 +327,4 @@ Examples
 
 Prepared by konsolebox
 Copyright Free / Public Domain
-Aug. 29, 2009 (Last Updated 2011/04/08)
+Aug. 29, 2009 (Last Updated 2016/06/22)

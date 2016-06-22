@@ -6,7 +6,7 @@
 # loader-extended.sh
 #
 # This is a generic/universal implementation of Shell Script Loader
-# Extended that targets all shells based from sh.
+# Extended that targets all shells based on sh.
 #
 # Please see loader-extended.txt for more info on how to use this
 # script.
@@ -14,19 +14,19 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader Extended version 0X (RS0X).
 #
-# Version: 0X.1.1
+# Version: 0X.1.2
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 30, 2009 (Last Updated 2011/07/14)
+# Aug. 30, 2009 (Last Updated 2016/06/22)
 
 # Note:
 #
 # Some shells or some shell versions may not not have the full
 # capability of supporting Shell Script Loader.  For example, some
 # earlier versions of Zsh (earlier than 4.2) have limitations to the
-# number of levels or recursions that its functions and/or commands that
-# can be actively executed.
+# number of levels or recursions that its functions and/or commands
+# can actively execute.
 
 # ----------------------------------------------------------------------
 
@@ -35,7 +35,7 @@
 
 LOADER_ACTIVE=true
 LOADER_RS=0X
-LOADER_VERSION=0X.1.1
+LOADER_VERSION=0X.1.2
 
 
 #### PRIVATE VARIABLES ####
@@ -701,8 +701,7 @@ if [ -n "$BASH_VERSION" ]; then
 				}
 
 				function loader_resetflags {
-					local IFS=\ ;
-					unset ${!LOADER_FLAGS_*}
+					unset "${!LOADER_FLAGS_@}"
 				}
 
 				function loader_resetpaths {
@@ -710,8 +709,7 @@ if [ -n "$BASH_VERSION" ]; then
 				}
 
 				function loader_unsetvars {
-					local IFS=\ ;
-					unset LOADER_CS LOADER_CS_I LOADER_PATHS ${!LOADER_FLAGS_*}
+					unset LOADER_CS LOADER_CS_I LOADER_PATHS "${!LOADER_FLAGS_@}"
 				}
 			'
 		fi
@@ -1425,7 +1423,7 @@ if [ "$LOADER_ADVANCED" = true ]; then
 
 		loader_findfile() {
 			for __ in \"\${LOADER_PATHS[@]}\"; do
-				if [ -f \"\$__/\$1\" ]; then
+				if [[ -f \$__/\$1 ]]; then
 					loader_getabspath \"\$__/\$1\"
 					return 0
 				fi
@@ -1507,7 +1505,7 @@ if [ "$LOADER_ADVANCED" = true ]; then
 
 			__=\$?
 
-			LOADER_CS[LOADER_CS_I--]=
+			[[ LOADER_CS_I -gt 0 ]] && LOADER_CS[LOADER_CS_I--]=
 
 			return \"\$__\"
 		}
@@ -1771,7 +1769,7 @@ else
 
 			case \"\$1\" in
 			*/)
-				[ ! \"$__\" = / ] && __=\$__/
+				[ \"\$__\" = / ] || __=\$__/
 				;;
 			*)
 				[ \"\$__\" = / ] && __=/.
