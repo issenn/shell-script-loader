@@ -1,6 +1,5 @@
 #!/usr/bin/env zsh
 
-
 # ----------------------------------------------------------------------
 
 # loader-extended.zsh
@@ -14,11 +13,11 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader Extended version 0X (RS0X).
 #
-# Version: 0X.1.2
+# Version: 0X.2
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 30, 2009 (Last Updated 2016/06/22)
+# Aug. 30, 2009 (Last Updated 2016/06/28)
 
 # Notes:
 #
@@ -55,7 +54,6 @@
 
 # ----------------------------------------------------------------------
 
-
 if [ "$LOADER_ACTIVE" = true ]; then
 	echo "loader: loader cannot be loaded twice."
 	exit 1
@@ -64,7 +62,7 @@ if [ -z "$ZSH_VERSION" ]; then
 	echo "loader: zsh is needed to run this script."
 	exit 1
 fi
-if ! ( eval "set -- ${ZSH_VERSION//./ }"; [ "$1" -gt 4 ] || [ "$1" -eq 4 -a "$2" -ge 2 ]; exit "$?"; ); then
+if ! ( eval "set -- ${ZSH_VERSION//./ }"; [ "$1" -gt 4 ] || [ "$1" -eq 4 -a "$2" -ge 2 ]; exit "$?" ); then
 	echo "loader: only versions of zsh not earlier than 4.2.0 can work properly with this script."
 	exit 1
 fi
@@ -73,13 +71,11 @@ if [ "$ZSH_NAME" = sh -o "$ZSH_NAME" = ksh ]; then
 	exit 1
 fi
 
-
 #### PUBLIC VARIABLES ####
 
 typeset -g LOADER_ACTIVE=true
 typeset -g LOADER_RS=0X
-typeset -g LOADER_VERSION=0X.1.2
-
+typeset -g LOADER_VERSION=0X.2
 
 #### PRIVATE VARIABLES ####
 
@@ -87,143 +83,118 @@ typeset -g -a LOADER_ARGS
 typeset -g -a LOADER_CS
 typeset -g -i LOADER_CS_I=0
 typeset -g    LOADER_EXPR
-typeset -g    LOADER_FILEEXPR
+typeset -g    LOADER_FILE_EXPR
 typeset -g -A LOADER_FLAGS
 typeset -g -a LOADER_LIST
 typeset -g -a LOADER_PATHS
 typeset -g -A LOADER_PATHS_FLAGS
-typeset -g    LOADER_PLAIN
 typeset -g -i LOADER_R
-typeset -g    LOADER_REGEXPREFIX
-typeset -g    LOADER_TESTOPT
-
+typeset -g    LOADER_REGEX_PREFIX
+typeset -g    LOADER_TEST_OPT
 
 #### PUBLIC FUNCTIONS ####
 
 function load {
-	[[ $# -eq 0 ]] && loader_fail "function called with no argument." load
+	[[ $# -eq 0 ]] && loader_fail "Function called with no argument." load
 
-	case "$1" in
+	case $1 in
 	'')
-		loader_fail "file expression cannot be null." load "$@"
+		loader_fail "File expression cannot be null." load "$@"
 		;;
 	/*|./*|../*)
 		if [[ -f $1 ]]; then
-			loader_getabspath "$1"
-
-			[[ -r $__ ]] || loader_fail "file not readable: $__" load "$@"
-
-			shift
-			loader_load "$@"
-
-			return
+			loader_getcleanpath "$1"
+			[[ -r $__ ]] || loader_fail "File not readable: $__" load "$@"
+			loader_load "$@[2,-1]"
+			__=$?
+			[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
+			return "$__"
 		fi
 		;;
 	*)
 		for __ in "${LOADER_PATHS[@]}"; do
 			[[ -f $__/$1 ]] || continue
-
-			loader_getabspath "$__/$1"
-
-			[[ -r $__ ]] || loader_fail "found file not readable: $__" load "$@"
-
+			loader_getcleanpath "$__/$1"
+			[[ -r $__ ]] || loader_fail "Found file not readable: $__" load "$@"
 			LOADER_FLAGS[$1]=.
-
-			shift
-			loader_load "$@"
-
-			return
+			loader_load "$@[2,-1]"
+			__=$?
+			[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
+			return "$__"
 		done
 		;;
 	esac
 
-	loader_fail "file not found: $1" load "$@"
+	loader_fail "File not found: $1" load "$@"
 }
 
 function include {
-	[[ $# -eq 0 ]] && loader_fail "function called with no argument." include
+	[[ $# -eq 0 ]] && loader_fail "Function called with no argument." include
 
-	case "$1" in
+	case $1 in
 	'')
-		loader_fail "file expression cannot be null." include "$@"
+		loader_fail "File expression cannot be null." include "$@"
 		;;
 	/*|./*|../*)
-		loader_getabspath "$1"
-
-		[[ -n ${LOADER_FLAGS[$__]} ]] && \
-			return
+		loader_getcleanpath "$1"
+		[[ -n ${LOADER_FLAGS[$__]} ]] && return
 
 		if [[ -f $__ ]]; then
-			[[ -r $__ ]] || loader_fail "file not readable: $__" include "$@"
-
-			shift
-			loader_load "$@"
-
-			return
+			[[ -r $__ ]] || loader_fail "File not readable: $__" include "$@"
+			loader_load "$@[2,-1]"
+			__=$?
+			[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
+			return "$__"
 		fi
 		;;
 	*)
-		[[ -n ${LOADER_FLAGS[$1]} ]] && \
-			return
+		[[ -n ${LOADER_FLAGS[$1]} ]] && return
 
 		for __ in "${LOADER_PATHS[@]}"; do
-			loader_getabspath "$__/$1"
+			loader_getcleanpath "$__/$1"
 
 			if [[ -n ${LOADER_FLAGS[$__]} ]]; then
 				LOADER_FLAGS[$1]=.
-
 				return
 			elif [[ -f $__ ]]; then
-				[[ -r $__ ]] || loader_fail "found file not readable: $__" include "$@"
-
+				[[ -r $__ ]] || loader_fail "Found file not readable: $__" include "$@"
 				LOADER_FLAGS[$1]=.
-
-				shift
-				loader_load "$@"
-
-				return
+				loader_load "$@[2,-1]"
+				__=$?
+				[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
+				return "$__"
 			fi
 		done
 		;;
 	esac
 
-	loader_fail "file not found: $1" include "$@"
+	loader_fail "File not found: $1" include "$@"
 }
 
 function call {
-	[[ $# -eq 0 ]] && loader_fail "function called with no argument." call
+	[[ $# -eq 0 ]] && loader_fail "Function called with no argument." call
 
-	case "$1" in
+	case $1 in
 	'')
-		loader_fail "file expression cannot be null." call "$@"
+		loader_fail "File expression cannot be null." call "$@"
 		;;
 	/*|./*|../*)
 		if [[ -f $1 ]]; then
-			loader_getabspath "$1"
-
-			[[ -r $__ ]] || loader_fail "file not readable: $__" call "$@"
-
-			(
-				shift
-				loader_load "$@"
-			)
-
+			loader_getcleanpath "$1"
+			[[ -r $__ ]] || loader_fail "File not readable: $__" call "$@"
+			( loader_load "$@[2,-1]" )
 			return
 		fi
 		;;
 	*)
 		for __ in "${LOADER_PATHS[@]}"; do
 			[[ -f $__/$1 ]] || continue
-
-			loader_getabspath "$__/$1"
-
-			[[ -r $__ ]] || loader_fail "found file not readable: $__" call "$@"
+			loader_getcleanpath "$__/$1"
+			[[ -r $__ ]] || loader_fail "Found file not readable: $__" call "$@"
 
 			(
 				LOADER_FLAGS[$1]=.
-
-				shift
-				loader_load "$@"
+				loader_load "$@[2,-1]"
 			)
 
 			return
@@ -231,474 +202,389 @@ function call {
 		;;
 	esac
 
-	loader_fail "file not found: $1" call "$@"
+	loader_fail "File not found: $1" call "$@"
 }
 
 function loadx {
-	[[ $# -eq 0 ]] && loader_fail "function called with no argument." loadx
+	[[ $# -eq 0 ]] && loader_fail "Function called with no argument." loadx
 
-	case "$1" in
+	case $1 in
 	*[?*]*)
 		LOADER_EXPR=$1
-		LOADER_PLAIN=false
-		LOADER_TESTOPT=-name
-		LOADER_REGEXPREFIX=
-		local -i LOADER_OFFSET=2
+		LOADER_TEST_OPT=-name
+		LOADER_REGEX_PREFIX=
+		local LOADER_OFFSET=2
 		;;
 	-name|-iname)
 		LOADER_EXPR=$2
-		LOADER_PLAIN=false
-		LOADER_TESTOPT=$1
-		LOADER_REGEXPREFIX=
-		local -i LOADER_OFFSET=3
+		LOADER_TEST_OPT=$1
+		LOADER_REGEX_PREFIX=
+		local LOADER_OFFSET=3
 		;;
 	-regex|-iregex)
 		LOADER_EXPR=$2
-		LOADER_PLAIN=false
-		LOADER_TESTOPT=$1
-		LOADER_REGEXPREFIX=\\./
-		local -i LOADER_OFFSET=3
+		LOADER_TEST_OPT=$1
+		LOADER_REGEX_PREFIX=\\./
+		local LOADER_OFFSET=3
+		;;
+	'')
+		loader_fail "File expression cannot be null." loadx "$@"
+		;;
+	/*|./*|../*)
+		if [[ -f $1 ]]; then
+			loader_getcleanpath "$1"
+			[[ -r $__ ]] || loader_fail "File not readable: $__" loadx "$@"
+			loader_load "$@[2,-1]"
+			__=$?
+			[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
+			return "$__"
+		fi
+
+		loader_fail "File not found: $1" loadx "$@"
 		;;
 	*)
-		LOADER_PLAIN=true
+		for __ in "${LOADER_PATHS[@]}"; do
+			[[ -f $__/$1 ]] || continue
+			loader_getcleanpath "$__/$1"
+			[[ -r $__ ]] || loader_fail "Found file not readable: $__" loadx "$@"
+			LOADER_FLAGS[$1]=.
+			loader_load "$@[2,-1]"
+			__=$?
+			[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
+			return "$__"
+		done
+
+		loader_fail "File not found: $1" loadx "$@"
 		;;
 	esac
 
-	if [[ $LOADER_PLAIN = true ]]; then
-		[[ $# -eq 0 ]] && loader_fail "function called with no argument." loadx
+	local LOADER_ABS_PREFIX LOADER_SUBPREFIX
 
-		case "$1" in
-		'')
-			loader_fail "file expression cannot be null." loadx "$@"
-			;;
-		/*|./*|../*)
-			if [[ -f $1 ]]; then
-				loader_getabspath "$1"
-
-				[[ -r $__ ]] || loader_fail "file not readable: $__" loadx "$@"
-
-				shift
-				loader_load "$@"
-
-				return
-			fi
-			;;
-		*)
-			for __ in "${LOADER_PATHS[@]}"; do
-				[[ -f $__/$1 ]] || continue
-
-				loader_getabspath "$__/$1"
-
-				[[ -r $__ ]] || loader_fail "found file not readable: $__" loadx "$@"
-
-				LOADER_FLAGS[$1]=.
-
-				shift
-				loader_load "$@"
-
-				return
-			done
-			;;
-		esac
-
-		loader_fail "file not found: $1" loadx "$@"
-	else
-		local LOADER_ABSPREFIX LOADER_SUBPREFIX
-
-		case "$LOADER_EXPR" in
-		'')
-			loader_fail "file expression cannot be null." loadx "$@"
-			;;
-		*/*)
-			LOADER_FILEEXPR=${LOADER_EXPR##*/}
-			LOADER_SUBPREFIX=${LOADER_EXPR%/*}/
-
-			[[ -z $LOADER_FILEEXPR ]] && \
-				loader_fail "expression does not represent files: $LOADER_EXPR" loadx "$@"
-			;;
-		*)
-			LOADER_FILEEXPR=$LOADER_EXPR
-			LOADER_SUBPREFIX=''
-			;;
-		esac
-
-		case "$LOADER_SUBPREFIX" in
-		*[*?]*)
-			loader_fail "expressions for directories are not supported: $LOADER_SUBPREFIX" loadx "$@"
-			;;
-		/*|./*|../*)
-			[[ -d $LOADER_SUBPREFIX ]] || \
-				loader_fail "directory not found: $LOADER_SUBPREFIX" loadx "$@"
-
-			if loader_list "$LOADER_SUBPREFIX"; then
-				for __ in "${LOADER_LIST[@]}"; do
-					__=$LOADER_ABSPREFIX$__
-
-					[[ -r $__ ]] || loader_fail "found file not readable: $__" loadx "$@"
-
-					loader_load "${@[LOADER_OFFSET,-1]}"
-				done
-
-				set -A LOADER_LIST
-
-				return
-			fi
-			;;
-		*)
-			for __ in "${LOADER_PATHS[@]}"; do
-				__=$__/$LOADER_SUBPREFIX
-
-				[[ -d $__ ]] || \
-					continue
-
-				if loader_list "$__"; then
-					for __ in "${LOADER_LIST[@]}"; do
-						LOADER_FLAGS[$LOADER_SUBPREFIX$__]=.
-
-						__=$LOADER_ABSPREFIX$__
-
-						[[ -r $__ ]] || loader_fail "found file not readable: $__" loadx "$@"
-
-						loader_load "${@[LOADER_OFFSET,-1]}"
-					done
-
-					set -A LOADER_LIST
-
-					return
-				fi
-			done
-			;;
-		esac
-
-		loader_fail "no file was found with expression: $LOADER_EXPR" loadx "$@"
-	fi
-}
-
-function includex {
-	[[ $# -eq 0 ]] && loader_fail "function called with no argument." includex
-
-	case "$1" in
-	*[?*]*)
-		LOADER_EXPR=$1
-		LOADER_PLAIN=false
-		LOADER_TESTOPT=-name
-		LOADER_REGEXPREFIX=
-		local -i LOADER_OFFSET=2
+	case $LOADER_EXPR in
+	'')
+		loader_fail "File expression cannot be null." loadx "$@"
 		;;
-	-name|-iname)
-		LOADER_EXPR=$2
-		LOADER_PLAIN=false
-		LOADER_TESTOPT=$1
-		LOADER_REGEXPREFIX=
-		local -i LOADER_OFFSET=3
-		;;
-	-regex|-iregex)
-		LOADER_EXPR=$2
-		LOADER_PLAIN=false
-		LOADER_TESTOPT=$1
-		LOADER_REGEXPREFIX=\\./
-		local -i LOADER_OFFSET=3
+	*/*)
+		LOADER_FILE_EXPR=${LOADER_EXPR##*/}
+		LOADER_SUBPREFIX=${LOADER_EXPR%/*}/
+		[[ -z $LOADER_FILE_EXPR ]] && loader_fail "Expression does not represent files: $LOADER_EXPR" loadx "$@"
 		;;
 	*)
-		LOADER_PLAIN=true
+		LOADER_FILE_EXPR=$LOADER_EXPR
+		LOADER_SUBPREFIX=
 		;;
 	esac
 
-	if [[ $LOADER_PLAIN = true ]]; then
-		[[ $# -eq 0 ]] && loader_fail "function called with no argument." includex
-
-		case "$1" in
-		'')
-			loader_fail "file expression cannot be null." includex "$@"
-			;;
-		/*|./*|../*)
-			loader_getabspath "$1"
-
-			[[ -n ${LOADER_FLAGS[$__]} ]] && \
-				return
-
-			if [[ -f $__ ]]; then
-				[[ -r $__ ]] || loader_fail "file not readable: $__" includex "$@"
-
-				shift
-				loader_load "$@"
-
-				return
-			fi
-			;;
-		*)
-			[[ -n ${LOADER_FLAGS[$1]} ]] && \
-				return
-
-			for __ in "${LOADER_PATHS[@]}"; do
-				loader_getabspath "$__/$1"
-
-				if [[ -n ${LOADER_FLAGS[$__]} ]]; then
-					LOADER_FLAGS[$1]=.
-
-					return
-				elif [[ -f $__ ]]; then
-					[[ -r $__ ]] || loader_fail "found file not readable: $__" includex "$@"
-
-					LOADER_FLAGS[$1]=.
-
-					shift
-					loader_load "$@"
-
-					return
-				fi
-			done
-			;;
-		esac
-
-		loader_fail "file not found: $1" includex "$@"
-	else
-		local LOADER_ABSPREFIX LOADER_SUBPREFIX
-
-		case "$LOADER_EXPR" in
-		'')
-			loader_fail "file expression cannot be null." includex "$@"
-			;;
-		*/*)
-			LOADER_FILEEXPR=${LOADER_EXPR##*/}
-			LOADER_SUBPREFIX=${LOADER_EXPR%/*}/
-
-			[[ -z $LOADER_FILEEXPR ]] && \
-				loader_fail "expression does not represent files: $LOADER_EXPR" includex "$@"
-			;;
-		*)
-			LOADER_FILEEXPR=$LOADER_EXPR
-			LOADER_SUBPREFIX=''
-			;;
-		esac
-
-		case "$LOADER_SUBPREFIX" in
-		*[*?]*)
-			loader_fail "expressions for directories are not supported: $LOADER_SUBPREFIX" includex "$@"
-			;;
-		/*|./*|../*)
-			[[ -d $LOADER_SUBPREFIX ]] || \
-				loader_fail "directory not found: $LOADER_SUBPREFIX" includex "$@"
-
-			if loader_list "$LOADER_SUBPREFIX"; then
-				for __ in "${LOADER_LIST[@]}"; do
-					__=$LOADER_ABSPREFIX$__
-
-					[[ -n ${LOADER_FLAGS[$__]} ]] && \
-						continue
-
-					[[ -r $__ ]] || loader_fail "found file not readable: $__" includex "$@"
-
-					loader_load "${@[LOADER_OFFSET,-1]}"
-				done
-
-				set -A LOADER_LIST
-
-				return
-			fi
-			;;
-		*)
-			for __ in "${LOADER_PATHS[@]}"; do
-				__=$__/$LOADER_SUBPREFIX
-
-				[[ -d $__ ]] || \
-					continue
-
-				if loader_list "$__"; then
-					for __ in "${LOADER_LIST[@]}"; do
-						[[ -n ${LOADER_FLAGS[$LOADER_ABSPREFIX$__]} ]] && \
-							continue
-
-						LOADER_FLAGS[$LOADER_SUBPREFIX$__]=.
-
-						__=$LOADER_ABSPREFIX$__
-
-						[[ -r $__ ]] || loader_fail "found file not readable: $__" includex "$@"
-
-						loader_load "${@[LOADER_OFFSET,-1]}"
-					done
-
-					set -A LOADER_LIST
-
-					return
-				fi
-			done
-			;;
-		esac
-
-		loader_fail "no file was found with expression: $LOADER_EXPR" includex "$@"
-	fi
-}
-
-function callx {
-	[[ $# -eq 0 ]] && loader_fail "function called with no argument." callx
-
-	case "$1" in
-	*[?*]*)
-		LOADER_EXPR=$1
-		LOADER_PLAIN=false
-		LOADER_TESTOPT=-name
-		LOADER_REGEXPREFIX=
-		local -i LOADER_OFFSET=2
+	case $LOADER_SUBPREFIX in
+	*[*?]*)
+		loader_fail "Expressions for directories are not supported: $LOADER_SUBPREFIX" loadx "$@"
 		;;
-	-name|-iname)
-		LOADER_EXPR=$2
-		LOADER_PLAIN=false
-		LOADER_TESTOPT=$1
-		LOADER_REGEXPREFIX=
-		local -i LOADER_OFFSET=3
-		;;
-	-regex|-iregex)
-		LOADER_EXPR=$2
-		LOADER_PLAIN=false
-		LOADER_TESTOPT=$1
-		LOADER_REGEXPREFIX=\\./
-		local -i LOADER_OFFSET=3
+	/*|./*|../*)
+		[[ -d $LOADER_SUBPREFIX ]] || loader_fail "Directory not found: $LOADER_SUBPREFIX" loadx "$@"
+
+		if loader_list "$LOADER_SUBPREFIX"; then
+			LOADER_R=0
+
+			for __ in "${LOADER_LIST[@]}"; do
+				__=$LOADER_ABS_PREFIX$__
+				[[ -r $__ ]] || loader_fail "Found file not readable: $__" loadx "$@"
+				loader_load "${@[LOADER_OFFSET,-1]}" || LOADER_R=1
+				[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
+			done
+
+			set -A LOADER_LIST
+			return "$LOADER_R"
+		fi
 		;;
 	*)
-		LOADER_PLAIN=true
-		;;
-	esac
+		for __ in "${LOADER_PATHS[@]}"; do
+			__=$__/$LOADER_SUBPREFIX
+			[[ -d $__ ]] || continue
 
-	if [[ $LOADER_PLAIN = true ]]; then
-		[[ $# -eq 0 ]] && loader_fail "function callxed with no argument." callx
-
-		case "$1" in
-		'')
-			loader_fail "file expression cannot be null." callx "$@"
-			;;
-		/*|./*|../*)
-			if [[ -f $1 ]]; then
-				loader_getabspath "$1"
-
-				[[ -r $__ ]] || loader_fail "file not readable: $__" callx "$@"
-
-				(
-					shift
-					loader_load "$@"
-				)
-
-				return
-			fi
-			;;
-		*)
-			for __ in "${LOADER_PATHS[@]}"; do
-				[[ -f $__/$1 ]] || continue
-
-				loader_getabspath "$__/$1"
-
-				[[ -r $__ ]] || loader_fail "found file not readable: $__" callx "$@"
-
-				(
-					LOADER_FLAGS[$1]=.
-
-					shift
-					loader_load "$@"
-				)
-
-				return
-			done
-			;;
-		esac
-
-		loader_fail "file not found: $1" callx "$@"
-	else
-		local LOADER_ABSPREFIX LOADER_SUBPREFIX
-
-		case "$LOADER_EXPR" in
-		'')
-			loader_fail "file expression cannot be null." callx "$@"
-			;;
-		*/*)
-			LOADER_FILEEXPR=${LOADER_EXPR##*/}
-			LOADER_SUBPREFIX=${LOADER_EXPR%/*}/
-
-			[[ -z $LOADER_FILEEXPR ]] && \
-				loader_fail "expression does not represent files: $LOADER_EXPR" callx "$@"
-			;;
-		*)
-			LOADER_FILEEXPR=$LOADER_EXPR
-			LOADER_SUBPREFIX=''
-			;;
-		esac
-
-		case "$LOADER_SUBPREFIX" in
-		*[*?]*)
-			loader_fail "expressions for directories are not supported: $LOADER_SUBPREFIX" callx "$@"
-			;;
-		/*|./*|../*)
-			[[ -d $LOADER_SUBPREFIX ]] || \
-				loader_fail "directory not found: $LOADER_SUBPREFIX" callx "$@"
-
-			if loader_list "$LOADER_SUBPREFIX"; then
+			if loader_list "$__"; then
 				LOADER_R=0
 
 				for __ in "${LOADER_LIST[@]}"; do
-					__=$LOADER_ABSPREFIX$__
-
-					[[ -r $__ ]] || loader_fail "found file not readable: $__" callx "$@"
-
-					( loader_load "${@[LOADER_OFFSET,-1]}"; ) || LOADER_R=1
+					LOADER_FLAGS[$LOADER_SUBPREFIX$__]=.
+					__=$LOADER_ABS_PREFIX$__
+					[[ -r $__ ]] || loader_fail "Found file not readable: $__" loadx "$@"
+					loader_load "${@[LOADER_OFFSET,-1]}" || LOADER_R=1
+					[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
 				done
 
 				set -A LOADER_LIST
-
 				return "$LOADER_R"
 			fi
-			;;
-		*)
-			for __ in "${LOADER_PATHS[@]}"; do
-				__=$__/$LOADER_SUBPREFIX
+		done
+		;;
+	esac
 
-				[[ -d $__ ]] || \
-					continue
+	loader_fail "No file was found with expression: $LOADER_EXPR" loadx "$@"
+}
 
-				if loader_list "$__"; then
-					LOADER_R=0
+function includex {
+	[[ $# -eq 0 ]] && loader_fail "Function called with no argument." includex
 
-					for __ in "${LOADER_LIST[@]}"; do
-						[[ -r $LOADER_ABSPREFIX$__ ]] || \
-							loader_fail "found file not readable: $LOADER_ABSPREFIX$__" callx "$@"
+	case $1 in
+	*[?*]*)
+		LOADER_EXPR=$1
+		LOADER_TEST_OPT=-name
+		LOADER_REGEX_PREFIX=
+		local LOADER_OFFSET=2
+		;;
+	-name|-iname)
+		LOADER_EXPR=$2
+		LOADER_TEST_OPT=$1
+		LOADER_REGEX_PREFIX=
+		local LOADER_OFFSET=3
+		;;
+	-regex|-iregex)
+		LOADER_EXPR=$2
+		LOADER_TEST_OPT=$1
+		LOADER_REGEX_PREFIX=\\./
+		local LOADER_OFFSET=3
+		;;
+	'')
+		loader_fail "File expression cannot be null." includex "$@"
+		;;
+	/*|./*|../*)
+		loader_getcleanpath "$1"
+		[[ -n ${LOADER_FLAGS[$__]} ]] && return
 
-						(
-							LOADER_FLAGS[$LOADER_SUBPREFIX$__]=.
+		if [[ -f $__ ]]; then
+			[[ -r $__ ]] || loader_fail "File not readable: $__" includex "$@"
+			loader_load "$@[2,-1]"
+			__=$?
+			[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
+			return "$__"
+		fi
 
-							__=$LOADER_ABSPREFIX$__
+		loader_fail "File not found: $1" includex "$@"
+		;;
+	*)
+		[[ -n ${LOADER_FLAGS[$1]} ]] && return
 
-							loader_load "${@[LOADER_OFFSET,-1]}"
-						) || LOADER_R=1
-					done
+		for __ in "${LOADER_PATHS[@]}"; do
+			loader_getcleanpath "$__/$1"
 
-					set -A LOADER_LIST
+			if [[ -n ${LOADER_FLAGS[$__]} ]]; then
+				LOADER_FLAGS[$1]=.
+				return
+			elif [[ -f $__ ]]; then
+				[[ -r $__ ]] || loader_fail "Found file not readable: $__" includex "$@"
+				LOADER_FLAGS[$1]=.
+				loader_load "$@[2,-1]"
+				__=$?
+				[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
+				return "$__"
+			fi
+		done
 
-					return "$LOADER_R"
-				fi
+		loader_fail "File not found: $1" includex "$@"
+		;;
+	esac
+
+	local LOADER_ABS_PREFIX LOADER_SUBPREFIX
+
+	case $LOADER_EXPR in
+	'')
+		loader_fail "File expression cannot be null." includex "$@"
+		;;
+	*/*)
+		LOADER_FILE_EXPR=${LOADER_EXPR##*/}
+		LOADER_SUBPREFIX=${LOADER_EXPR%/*}/
+		[[ -z $LOADER_FILE_EXPR ]] && loader_fail "Expression does not represent files: $LOADER_EXPR" includex "$@"
+		;;
+	*)
+		LOADER_FILE_EXPR=$LOADER_EXPR
+		LOADER_SUBPREFIX=
+		;;
+	esac
+
+	case $LOADER_SUBPREFIX in
+	*[*?]*)
+		loader_fail "Expressions for directories are not supported: $LOADER_SUBPREFIX" includex "$@"
+		;;
+	/*|./*|../*)
+		[[ -d $LOADER_SUBPREFIX ]] || loader_fail "Directory not found: $LOADER_SUBPREFIX" includex "$@"
+
+		if loader_list "$LOADER_SUBPREFIX"; then
+			LOADER_R=0
+
+			for __ in "${LOADER_LIST[@]}"; do
+				__=$LOADER_ABS_PREFIX$__
+				[[ -n ${LOADER_FLAGS[$__]} ]] && continue
+				[[ -r $__ ]] || loader_fail "Found file not readable: $__" includex "$@"
+				loader_load "${@[LOADER_OFFSET,-1]}" || LOADER_R=1
+				[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
 			done
-			;;
-		esac
 
-		loader_fail "no file was found with expression: $LOADER_EXPR" callx "$@"
-	fi
+			set -A LOADER_LIST
+			return "$LOADER_R"
+		fi
+		;;
+	*)
+		for __ in "${LOADER_PATHS[@]}"; do
+			__=$__/$LOADER_SUBPREFIX
+			[[ -d $__ ]] || continue
+
+			if loader_list "$__"; then
+				LOADER_R=0
+
+				for __ in "${LOADER_LIST[@]}"; do
+					[[ -n ${LOADER_FLAGS[$LOADER_ABS_PREFIX$__]} ]] && continue
+					LOADER_FLAGS[$LOADER_SUBPREFIX$__]=.
+					__=$LOADER_ABS_PREFIX$__
+					[[ -r $__ ]] || loader_fail "Found file not readable: $__" includex "$@"
+					loader_load "${@[LOADER_OFFSET,-1]}" || LOADER_R=1
+					[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
+				done
+
+				set -A LOADER_LIST
+				return "$LOADER_R"
+			fi
+		done
+		;;
+	esac
+
+	loader_fail "No file was found with expression: $LOADER_EXPR" includex "$@"
+}
+
+function callx {
+	[[ $# -eq 0 ]] && loader_fail "Function called with no argument." callx
+
+	case $1 in
+	*[?*]*)
+		LOADER_EXPR=$1
+		LOADER_TEST_OPT=-name
+		LOADER_REGEX_PREFIX=
+		local LOADER_OFFSET=2
+		;;
+	-name|-iname)
+		LOADER_EXPR=$2
+		LOADER_TEST_OPT=$1
+		LOADER_REGEX_PREFIX=
+		local LOADER_OFFSET=3
+		;;
+	-regex|-iregex)
+		LOADER_EXPR=$2
+		LOADER_TEST_OPT=$1
+		LOADER_REGEX_PREFIX=\\./
+		local LOADER_OFFSET=3
+		;;
+	'')
+		loader_fail "File expression cannot be null." callx "$@"
+		;;
+	/*|./*|../*)
+		if [[ -f $1 ]]; then
+			loader_getcleanpath "$1"
+			[[ -r $__ ]] || loader_fail "File not readable: $__" callx "$@"
+			( loader_load "$@[2,-1]" )
+			return
+		fi
+
+		loader_fail "File not found: $1" callx "$@"
+		;;
+	*)
+		for __ in "${LOADER_PATHS[@]}"; do
+			[[ -f $__/$1 ]] || continue
+			loader_getcleanpath "$__/$1"
+			[[ -r $__ ]] || loader_fail "Found file not readable: $__" callx "$@"
+
+			(
+				LOADER_FLAGS[$1]=.
+				loader_load "$@[2,-1]"
+			)
+
+			return
+		done
+
+		loader_fail "File not found: $1" callx "$@"
+		;;
+	esac
+
+	local LOADER_ABS_PREFIX LOADER_SUBPREFIX
+
+	case $LOADER_EXPR in
+	'')
+		loader_fail "File expression cannot be null." callx "$@"
+		;;
+	*/*)
+		LOADER_FILE_EXPR=${LOADER_EXPR##*/}
+		LOADER_SUBPREFIX=${LOADER_EXPR%/*}/
+		[[ -z $LOADER_FILE_EXPR ]] && loader_fail "Expression does not represent files: $LOADER_EXPR" callx "$@"
+		;;
+	*)
+		LOADER_FILE_EXPR=$LOADER_EXPR
+		LOADER_SUBPREFIX=
+		;;
+	esac
+
+	case $LOADER_SUBPREFIX in
+	*[*?]*)
+		loader_fail "Expressions for directories are not supported: $LOADER_SUBPREFIX" callx "$@"
+		;;
+	/*|./*|../*)
+		[[ -d $LOADER_SUBPREFIX ]] || loader_fail "Directory not found: $LOADER_SUBPREFIX" callx "$@"
+
+		if loader_list "$LOADER_SUBPREFIX"; then
+			LOADER_R=0
+
+			for __ in "${LOADER_LIST[@]}"; do
+				__=$LOADER_ABS_PREFIX$__
+				[[ -r $__ ]] || loader_fail "Found file not readable: $__" callx "$@"
+				( loader_load "${@[LOADER_OFFSET,-1]}" ) || LOADER_R=1
+			done
+
+			set -A LOADER_LIST
+			return "$LOADER_R"
+		fi
+		;;
+	*)
+		for __ in "${LOADER_PATHS[@]}"; do
+			__=$__/$LOADER_SUBPREFIX
+			[[ -d $__ ]] || continue
+
+			if loader_list "$__"; then
+				LOADER_R=0
+
+				for __ in "${LOADER_LIST[@]}"; do
+					[[ -r $LOADER_ABS_PREFIX$__ ]] || loader_fail "Found file not readable: $LOADER_ABS_PREFIX$__" callx "$@"
+
+					(
+						LOADER_FLAGS[$LOADER_SUBPREFIX$__]=.
+						__=$LOADER_ABS_PREFIX$__
+						loader_load "${@[LOADER_OFFSET,-1]}"
+					) || LOADER_R=1
+				done
+
+				set -A LOADER_LIST
+				return "$LOADER_R"
+			fi
+		done
+		;;
+	esac
+
+	loader_fail "No file was found with expression: $LOADER_EXPR" callx "$@"
 }
 
 function loader_addpath {
-	for __ in "$@"; do
-		[[ -d $__ ]] || loader_fail "directory not found: $__" loader_addpath "$@"
-		[[ -x $__ ]] || loader_fail "directory not accessible: $__" loader_addpath "$@"
-		[[ -r $__ ]] || loader_fail "directory not searchable: $__" loader_addpath "$@"
-
-		loader_getabspath_ "$__/."
+	for __; do
+		[[ -d $__ ]] || loader_fail "Directory not found: $__" loader_addpath "$@"
+		[[ -x $__ ]] || loader_fail "Directory not accessible: $__" loader_addpath "$@"
+		[[ -r $__ ]] || loader_fail "Directory not searchable: $__" loader_addpath "$@"
+		loader_getcleanpath "$__"
 
 		if [[ -z ${LOADER_PATHS_FLAGS[$__]} ]]; then
-			LOADER_PATHS[$(( ${#LOADER_PATHS[@]} + 1 ))]=$__
+			LOADER_PATHS[${#LOADER_PATHS[@]}+1]=$__
 			LOADER_PATHS_FLAGS[$__]=.
 		fi
 	done
 }
 
 function loader_flag {
-	[[ $# -eq 1 ]] || loader_fail "function requires a single argument." loader_flag "$@"
-	loader_getabspath "$1"
+	[[ $# -eq 1 ]] || loader_fail "Function requires a single argument." loader_flag "$@"
+	loader_getcleanpath "$1"
 	LOADER_FLAGS[$__]=.
 }
 
@@ -713,206 +599,141 @@ function loader_reset {
 		set -A LOADER_PATHS
 		set -A LOADER_PATHS_FLAGS
 	else
-		loader_fail "invalid argument: $1" loader_reset "$@"
+		loader_fail "Invalid argument: $1" loader_reset "$@"
 	fi
 }
 
 function loader_finish {
 	LOADER_ACTIVE=false
 
-	unset \
-		load \
-		include \
-		call \
-		loadx \
-		includex \
-		callx \
-		loader_addpath \
-		loader_fail \
-		loader_finish \
-		loader_flag \
-		loader_getabspath \
-		loader_getabspath_ \
-		loader_list \
-		loader_load \
-		loader_load_ \
-		loader_reset \
-		LOADER_ARGS \
-		LOADER_CS \
-		LOADER_CS_I \
-		LOADER_EXPR \
-		LOADER_FILEEXPR \
-		LOADER_FLAGS \
-		LOADER_LIST \
-		LOADER_PATHS \
-		LOADER_PATHS_FLAGS \
-		LOADER_PLAIN \
-		LOADER_R \
-		LOADER_REGEXPREFIX \
-		LOADER_TESTOPT
-}
+	unset -v LOADER_ARGS LOADER_CS LOADER_CS_I LOADER_EXPR \
+		LOADER_FILE_EXPR LOADER_FLAGS LOADER_LIST LOADER_PATHS \
+		LOADER_PATHS_FLAGS LOADER_R LOADER_REGEX_PREFIX LOADER_TEST_OPT
 
+	unset -f load include call loadx includex callx loader_addpath \
+		loader_fail loader_finish loader_flag loader_getcleanpath \
+		loader_list loader_load loader_reset
+}
 
 #### PRIVATE FUNCTIONS ####
 
 function loader_load {
 	LOADER_FLAGS[$__]=.
-
 	LOADER_CS[++LOADER_CS_I]=$__
-
-	loader_load_ "$@"
-
-	__=$?
-	[[ LOADER_CS_I -gt 0 ]] && LOADER_CS[LOADER_CS_I--]=()
-	return "$__"
-}
-
-function loader_load_ {
 	. "$__"
 }
 
-function loader_list {
-	[[ -r $1 ]] || \
-		loader_fail "directory not readable or searchable: $1" loader_list "$@"
-
-	pushd "$1" >/dev/null || \
-		loader_fail "failed to access directory: $1" loader_list "$@"
-
-	local -i R=1 I=2
-
-	{
-		if read -r __; then
-			set -A LOADER_LIST "$__"
-
-			while read -r __; do
-				LOADER_LIST[I++]=$__
-			done
-
-			LOADER_ABSPREFIX=${PWD%/}/
-
-			R=0
-		fi
-	} < <(exec find -maxdepth 1 -xtype f "$LOADER_TESTOPT" "${LOADER_REGEXPREFIX}${LOADER_FILEEXPR}" -printf %f\\n)
-
-	popd >/dev/null || \
-		loader_fail "failed to change back to previous directory." loader_list "$@"
-
-	return "$R"
-}
-
-function loader_getabspath {
-	case "$1" in
+function loader_getcleanpath {
+	case $1 in
 	.|'')
-		case "$PWD" in
-		/)
-			__=/.
-			;;
-		*)
-			__=${PWD%/}
-			;;
-		esac
+		__=$PWD
+		;;
+	/)
+		__=/
 		;;
 	..|../*|*/..|*/../*|./*|*/.|*/./*|*//*)
-		loader_getabspath_ "$1"
-		;;
-	/*)
-		__=$1
-		;;
-	*)
-		__=${PWD%/}/$1
-		;;
-	esac
-}
+		local T I=0 IFS=/
+		set -A T
 
-function loader_getabspath_ {
-	local -a TOKENS; set -A TOKENS
-	local -i I=0
-	local IFS=/ T
-
-	__=$1
-
-	case "$1" in
-	/*)
-		set -- ${=1}
-		;;
-	*)
-		set -- ${=PWD} ${=1}
-		;;
-	esac
-
-	for T; do
-		case "$T" in
-		..)
-			[[ I -ne 0 ]] && TOKENS[I--]=()
-			continue
+		case $1 in
+		/*)
+			set -- ${=1#/}
 			;;
-		.|'')
-			continue
+		*)
+			set -- ${=PWD#/} ${=1}
 			;;
 		esac
 
-		TOKENS[++I]=$T
-	done
+		for __; do
+			case $__ in
+			..)
+				[[ I -gt 0 ]] && T[I--]=()
+				continue
+				;;
+			.|'')
+				continue
+				;;
+			esac
 
-	case "$__" in
-	*/)
-		[[ I -ne 0 ]] && __="/${TOKENS[*]}/" || __=/
+			T[++I]=$__
+		done
+
+		__="/${T[*]}"
+		;;
+	/*)
+		__=${1%/}
 		;;
 	*)
-		[[ I -ne 0 ]] && __="/${TOKENS[*]}" || __=/.
+		__=${PWD%/}/${1%/}
 		;;
 	esac
 }
 
 function loader_fail {
-	local MESSAGE=$1 FUNC=$2 A I
+	local MESSAGE=$1 FUNC=$2
 	shift 2
 
 	{
-		echo "loader: ${FUNC}(): ${MESSAGE}"
+		echo "loader: $FUNC(): $MESSAGE"
 		echo
+		echo '  Current scope:'
 
-		echo "  current scope:"
 		if [[ LOADER_CS_I -gt 0 ]]; then
-			echo "    ${LOADER_CS[LOADER_CS_I]}"
+			echo "    ${LOADER_CS[LOADER_CS_I - 1]}"
 		else
-			echo "    (main)"
+			echo '    (main)'
 		fi
+
 		echo
 
 		if [[ $# -gt 0 ]]; then
-			echo "  command:"
+			echo '  Command:'
 			echo -n "    $FUNC"
-			for A; do
-				echo -n " $A"
-			done
+			printf ' %q' "$@"
 			echo
 			echo
 		fi
 
 		if [[ LOADER_CS_I -gt 0 ]]; then
-			echo "  call stack:"
-			echo "    (main)"
-			for A in "${LOADER_CS[@]}"; do
-				echo "    -> $A"
-			done
+			echo '  Call stack:'
+			echo '    (main)'
+			printf '    -> %s\n' "${LOADER_CS[@]}"
 			echo
 		fi
 
-		echo "  search paths:"
-		if [[ ${#LOADER_PATHS[@]} -gt 0 ]]; then
-			for A in "${LOADER_PATHS[@]}"; do
-				echo "    $A"
-			done
-		else
-			echo "    (empty)"
-		fi
-		echo
+		echo '  Search paths:'
 
-		echo "  working directory:"
+		if [[ ${#LOADER_PATHS[@]} -gt 0 ]]; then
+			printf '    %s\n' "${LOADER_PATHS[@]}"
+		else
+			echo '    (empty)'
+		fi
+
+		echo
+		echo '  Working directory:'
 		echo "    $PWD"
 		echo
 	} >&2
 
 	exit 1
+}
+
+function loader_list {
+	[[ -r $1 ]] || loader_fail "Directory not readable or searchable: $1" loader_list "$@"
+	pushd "$1" >/dev/null || loader_fail "Failed to access directory: $1" loader_list "$@"
+	local R=1 I=2
+
+	if read -r __; then
+		set -A LOADER_LIST "$__"
+
+		while read -r __; do
+			LOADER_LIST[I++]=$__
+		done
+
+		LOADER_ABS_PREFIX=${PWD%/}/
+		R=0
+	fi < <(exec find -maxdepth 1 -xtype f "$LOADER_TEST_OPT" "$LOADER_REGEX_PREFIX$LOADER_FILE_EXPR" -printf %f\\n)
+
+	popd >/dev/null || loader_fail "Failed to change back to previous directory." loader_list "$@"
+	return "$R"
 }

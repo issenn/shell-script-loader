@@ -1,40 +1,64 @@
-------
-0X.1.2
-------
+-----------------
+0X.2 (2016/06/28)
+-----------------
 
-Fixed an instances of `\"$__\"` which should be `\"\$__\"`.
+- Function calls are now less recursive by one level.
 
-All advanced shell functions now use `[[ ]]` instead of `[ ]` for
-consistency.
+- Now using getcleanpath instead of getabspath.  It is simpler, and we
+  don't need the strict features of getabspath.
 
-Simplified `[ ! ... ] &&` to `[ ... ] ||` in a getabspath function.
+- Added support for MirBSD Ksh.
 
-We now check LOADER_CS_I if it's still set and has value > 0 before
-unsetting the element in LOADER_CS since Zsh gives an error if it's no
-longer set.  It happens when loader_finish is called in a called script.
+- Now using hash to remember location of executable binaries in some
+  places that are applicable and helpful to improve performance without
+  being completely explicit about the path.
 
-Now using "${!VAR_@}" instead of IFS=' ' and ${!VAR_*}.
+- Reformatted messages to more proper case form.
 
-Now using 'printf' instead of 'echo' in a 'for' loop when applicable.
+- Reformatted changelog file.
 
-------
-0X.1.1
-------
+- Some non-critical fixes.
 
-Added this changelog.
+- It's a complete code overhaul.
 
-Added an internal function for getting absolute paths in the generic
-script loader.sh.  Normal shells are now independent of the external
-commands getabspath and awk.
+-------------------
+0X.1.2 (2016/06/22)
+-------------------
 
-Fixed detection of the optional external command getabspath.  This time
-also, it will only be used if the newly added internal function doesn't
-work for the shell.
+- Fixed an instances of `\"$__\"` which should be `\"\$__\"`.
 
-No changes were made in other scripts.
+- All advanced shell functions now use `[[ ]]` instead of `[ ]` for
+  consistency.
 
-----
-0X.1
-----
+- Simplified `[ ! ... ] &&` to `[ ... ] ||` in a getabspath function.
 
-First presentable release.
+- We now check LOADER_CS_I if it's still set and has value > 0 before
+  unsetting the element in LOADER_CS since Zsh gives an error if it's
+  no longer set.  It happens when loader_finish is called in a called
+  script.
+
+- Now using "${!VAR_@}" instead of IFS=' ' and ${!VAR_*}.
+
+- Now using 'printf' instead of 'echo' in a 'for' loop when applicable.
+
+-------------------
+0X.1.1 (2011/07/14)
+-------------------
+
+- Added this changelog.
+
+- Added an internal function for getting absolute paths in the generic
+  script loader.sh.  Normal shells are now independent of the external
+  commands getabspath and awk.
+
+- Fixed detection of the optional external command getabspath.  This
+  time also, it will only be used if the newly added internal function
+  doesn't work for the shell.
+
+- No changes were made in other scripts.
+
+-----------------
+0X.1 (2011/04/08)
+-----------------
+
+- First presentable release.
