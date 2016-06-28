@@ -1,42 +1,71 @@
------
-0.1.2
------
+----------------
+0.2 (2016/06/28)
+----------------
 
-Fixed instances of `\"$__\"` which should be `\"\$__\"`.  It caused
-some scripts to be seen as not readable and not load when 'loader.sh' is
-loaded with advanced shells like Bash and Zsh.
+- Function calls are now less recursive by one level.
 
-All advanced shell functions now use `[[ ]]` instead of `[ ]` for
-consistency.
+- Now using getcleanpath instead of getabspath.  It is simpler, and we
+  don't need the strict features of getabspath.
 
-Simplified `[ ! ... ] &&` to `[ ... ] ||` in a getabspath function.
+- Added loader.bash-4 which strictly supports Bash version 4.0 and
+  above.
 
-We now check LOADER_CS_I if it's still set and has value > 0 before
-unsetting the element in LOADER_CS since Zsh gives an error if it's no
-longer set.  It happens when loader_finish is called in a called script.
+- Also added loader-include-prototype.bash.
 
-Now using "${!VAR_@}" instead of IFS=' ' and ${!VAR_*}.
+- Added support for MirBSD Ksh.
 
-Now using 'printf' instead of 'echo' in a 'for' loop when applicable.
+- Now using hash to remember location of executable binaries in some
+  places that are applicable and helpful to improve performance without
+  being completely explicit about the path.
 
------
-0.1.1
------
+- Reformatted messages to more proper case form.
 
-Added this changelog.
+- Reformatted changelog file.
 
-Added an internal function for getting absolute paths in the generic
-script loader-extended.sh.  Normal shells are now independent of the
-external commands getabspath and awk.
+- Some non-critical fixes.
 
-Fixed detection of the optional external command getabspath.  This time
-also, it will only be used if the newly added internal function doesn't
-work for the shell.
+- It's a complete code overhaul.
 
-No changes were made in other scripts.
+------------------
+0.1.2 (2016/06/22)
+------------------
 
----
-0.1
----
+- Fixed instances of `\"$__\"` which should be `\"\$__\"`.  It caused
+  some scripts to be seen as not readable and not load when 'loader.sh'
+  is loaded with advanced shells like Bash and Zsh.
 
-First presentable release.
+- All advanced shell functions now use `[[ ]]` instead of `[ ]` for
+  consistency.
+
+- Simplified `[ ! ... ] &&` to `[ ... ] ||` in a getabspath function.
+
+- We now check LOADER_CS_I if it's still set and has value > 0 before
+  unsetting the element in LOADER_CS since Zsh gives an error if it's no
+  longer set.  It happens when loader_finish is called in a called
+  script.
+
+- Now using "${!VAR_@}" instead of IFS=' ' and ${!VAR_*}.
+
+- Now using 'printf' instead of 'echo' in a 'for' loop when applicable.
+
+------------------
+0.1.1 (2011/07/14)
+------------------
+
+- Added this changelog.
+
+- Added an internal function for getting absolute paths in the generic
+  script loader-extended.sh.  Normal shells are now independent of the
+  external commands getabspath and awk.
+
+- Fixed detection of the optional external command getabspath.  This
+  time also, it will only be used if the newly added internal function
+  doesn't work for the shell.
+
+- No changes were made in other scripts.
+
+----------------
+0.1 (2011/04/09)
+----------------
+
+- First presentable release.

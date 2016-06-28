@@ -2,16 +2,16 @@
 
 # ----------------------------------------------------------------------
 
-# loader.bash
+# loader.bash-4
 #
 # This script implements Shell Script Loader for all versions of Bash
-# starting 2.04.
+# starting 4.0.  It's a little simpler than loader.bash.
 #
-# The script works faster with associative arrays.  To use associative
-# arrays, run the script with Bash 4.2 or newer.  You can also enable
-# usage of associative arrays with 4.0 or 4.1 by including it globally;
-# that is, not include the script with 'source' or '.' inside any
-# function.
+# If the script is to be used on versions of Bash earlier than 4.2,
+# it should be loaded globally; that is, not include the script with
+# 'source' or '.' inside any function.  This is however no longer
+# necessary starting Bash 4.2 since 'declare' already supports the '-g'
+# option which declares variables globally.
 #
 # Please see loader.txt for more info on how to use this script.
 #
@@ -22,7 +22,7 @@
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2016/06/28)
+# June 28, 2016
 
 # Limitations of Shell Script Loader with integers and associative
 # arrays:
@@ -77,8 +77,8 @@ if [ -z "$BASH_VERSION" ]; then
 	exit 1
 fi
 
-if ! [ "$BASH_VERSINFO" -ge 3 -o "$BASH_VERSION" '>' 2.03 ]; then
-	echo 'loader: This script is only compatible with versions of Bash not earlier than 2.04.' >&2
+if ! [[ BASH_VERSINFO -ge 4 ]]; then
+	echo 'loader: This script is only compatible with Bash version 4.0 or newer.' >&2
 	exit 1
 fi
 
@@ -99,16 +99,17 @@ LOADER_CS=()
 LOADER_CS_I=0
 LOADER_PATHS=()
 
-if [[ BASH_VERSINFO -ge 5 || (BASH_VERSINFO -eq 4 && BASH_VERSINFO[1] -ge 2) ]]; then
-	declare -g -A LOADER_FLAGS=()
-	declare -g -A LOADER_PATHS_FLAGS=()
-	LOADER_USE_ASSOC_ARRAYS=true
-elif [[ BASH_VERSINFO -eq 4 ]] && declare -A LOADER_TEST_1 &>/dev/null && ! local LOADER_TEST_2 &>/dev/null; then
-	declare -A LOADER_FLAGS=()
-	declare -A LOADER_PATHS_FLAGS=()
-	LOADER_USE_ASSOC_ARRAYS=true
+if [[ BASH_VERSINFO -eq 4 && BASH_VERSINFO[1] -lt 2 ]]; then
+	if local LOADER_TEST_1 &>/dev/null; then
+		if [[ ${#FUNCNAME[@]} -gt 0 ]]; then
+			echo "loader: Script must not be loaded from a function in versions of Bash earlier than 4.2." >&2
+			exit 1
+		fi
+	fi
+
+	declare -A LOADER_FLAGS=() LOADER_PATHS_FLAGS=()
 else
-	LOADER_USE_ASSOC_ARRAYS=false
+	declare -g -A LOADER_FLAGS=() LOADER_PATHS_FLAGS=()
 fi
 
 #### PUBLIC FUNCTIONS ####
@@ -135,7 +136,7 @@ function load {
 			[[ -f $__/$1 ]] || continue
 			loader_getcleanpath "$__/$1"
 			[[ -r $__ ]] || loader_fail "Found file not readable: $__" load "$@"
-			loader_flag_ "$1"
+			LOADER_FLAGS[$1]=.
 			loader_load "${@:2}"
 			__=$?
 			unset 'LOADER_CS[LOADER_CS_I--]'
@@ -156,7 +157,7 @@ function include {
 		;;
 	/*|./*|../*)
 		loader_getcleanpath "$1"
-		loader_flagged "$__" && return
+		[[ -n ${LOADER_FLAGS[$__]} ]] && return
 
 		if [[ -f $__ ]]; then
 			[[ -r $__ ]] || loader_fail "File not readable: $__" include "$@"
@@ -167,17 +168,17 @@ function include {
 		fi
 		;;
 	*)
-		loader_flagged "$1" && return
+		[[ -n ${LOADER_FLAGS[$1]} ]] && return
 
 		for __ in "${LOADER_PATHS[@]}"; do
 			loader_getcleanpath "$__/$1"
 
-			if loader_flagged "$__"; then
-				loader_flag_ "$1"
+			if [[ -n ${LOADER_FLAGS[$__]} ]]; then
+				LOADER_FLAGS[$1]=.
 				return 0
 			elif [[ -f $__ ]]; then
 				[[ -r $__ ]] || loader_fail "Found file not readable: $__" include "$@"
-				loader_flag_ "$1"
+				LOADER_FLAGS[$1]=.
 				loader_load "${@:2}"
 				__=$?
 				unset 'LOADER_CS[LOADER_CS_I--]'
@@ -212,7 +213,7 @@ function call {
 			[[ -r $__ ]] || loader_fail "Found file not readable: $__" call "$@"
 
 			(
-				loader_flag_ "$1"
+				LOADER_FLAGS[$1]=.
 				loader_load "${@:2}"
 			)
 
@@ -230,24 +231,27 @@ function loader_addpath {
 		[[ -x $__ ]] || loader_fail "Directory not accessible: $__" loader_addpath "$@"
 		[[ -r $__ ]] || loader_fail "Directory not searchable: $__" loader_addpath "$@"
 		loader_getcleanpath "$__"
-		loader_addpath_ "$__"
+
+		if [[ -z ${LOADER_PATHS_FLAGS[$__]} ]]; then
+			LOADER_PATHS[${#LOADER_PATHS[@]}]=$__
+			LOADER_PATHS_FLAGS[$__]=.
+		fi
 	done
 }
 
 function loader_flag {
 	[[ $# -eq 1 ]] || loader_fail "Function requires a single argument." loader_flag "$@"
 	loader_getcleanpath "$1"
-	loader_flag_ "$__"
+	LOADER_FLAGS[$__]=.
 }
 
 function loader_reset {
 	if [[ $# -eq 0 ]]; then
-		loader_reset_flags
-		loader_reset_paths
-	elif [[ $1 == flags ]]; then
-		loader_reset_flags
-	elif [[ $1 == paths ]]; then
-		loader_reset_paths
+		LOADER_FLAGS=() LOADER_PATHS=() LOADER_PATHS_FLAGS=()
+	elif [[ $1 = flags ]]; then
+		LOADER_FLAGS=()
+	elif [[ $1 = paths ]]; then
+		LOADER_PATHS=() LOADER_PATHS_FLAGS=()
 	else
 		loader_fail "Invalid argument: $1" loader_reset "$@"
 	fi
@@ -255,28 +259,71 @@ function loader_reset {
 
 function loader_finish {
 	LOADER_ACTIVE=false
-	loader_reset_flags
 
 	unset -v LOADER_CS LOADER_CS_I LOADER_FLAGS LOADER_PATHS \
 		LOADER_PATHS_FLAGS
 
-	unset -f load include call loader_addpath loader_addpath_ \
-		loader_fail loader_finish loader_flagged loader_flag \
-		loader_flag_ loader_getcleanpath loader_load loader_load \
-		loader_reset_flags loader_reset_paths loader_reset
+	unset -f load include call loader_addpath loader_fail \
+		loader_finish loader_flag loader_getcleanpath loader_load \
+		loader_reset
 }
 
 #### PRIVATE FUNCTIONS ####
 
 function loader_load {
-	loader_flag_ "$__"
+	LOADER_FLAGS[$__]=.
 	LOADER_CS[++LOADER_CS_I]=$__
 	. "$__"
 }
 
+function loader_getcleanpath {
+	case $1 in
+	.|'')
+		__=$PWD
+		;;
+	/)
+		__=/
+		;;
+	..|../*|*/..|*/../*|./*|*/.|*/./*|*//*)
+		local T1 T2=() I=0 IFS=/
+
+		case $1 in
+		/*)
+			read -ra T1 <<< "${1#/}"
+			;;
+		*)
+			read -ra T1 <<< "${PWD#/}/$1"
+			;;
+		esac
+
+		for __ in "${T1[@]}"; do
+			case $__ in
+			..)
+				[[ I -gt 0 ]] && (( --I ))
+				continue
+				;;
+			.|'')
+				continue
+				;;
+			esac
+
+			T2[I++]=$__
+		done
+
+		__="/${T2[*]:0:I}"
+		;;
+	/*)
+		__=${1%/}
+		;;
+	*)
+		__=${PWD%/}/${1%/}
+		;;
+	esac
+}
+
 function loader_fail {
 	local MESSAGE=$1 FUNC=$2 MAIN='(main)'
-	[[ -n $0 && "${0##*/}" != "${BASH##*/}" ]] && MAIN=$0
+	[[ -n $0 && ${0##*/} != "${BASH##*/}" ]] && MAIN=$0
 	shift 2
 
 	{
@@ -294,9 +341,8 @@ function loader_fail {
 
 		if [[ $# -gt 0 ]]; then
 			echo '  Command:'
-			echo -n "    $FUNC"
-			printf ' %q' "$@"
-			echo
+			printf -v __ ' %q' "$@"
+			echo "    $FUNC$__"
 			echo
 		fi
 
@@ -324,176 +370,9 @@ function loader_fail {
 	exit 1
 }
 
-#### VERSION DEPENDENT FUNCTIONS AND VARIABLES ####
-
-if [[ $LOADER_USE_ASSOC_ARRAYS == true ]]; then
-	function loader_addpath_ {
-		if [[ -z ${LOADER_PATHS_FLAGS[$1]} ]]; then
-			LOADER_PATHS[${#LOADER_PATHS[@]}]=$1
-			LOADER_PATHS_FLAGS[$1]=.
-		fi
-	}
-
-	function loader_flag_ {
-		LOADER_FLAGS[$1]=.
-	}
-
-	function loader_flagged {
-		[[ -n ${LOADER_FLAGS[$1]} ]]
-	}
-
-	function loader_reset_flags {
-		LOADER_FLAGS=()
-	}
-
-	function loader_reset_paths {
-		LOADER_PATHS=()
-		LOADER_PATHS_FLAGS=()
-	}
-else
-	function loader_addpath_ {
-		for __ in "${LOADER_PATHS[@]}"; do
-			[[ $1 == "$__" ]] && return
-		done
-
-		LOADER_PATHS[${#LOADER_PATHS[@]}]=$1
-	}
-
-	function loader_flag_ {
-		local V
-		V=${1//./_dt_}
-		V=${V// /_sp_}
-		V=${V//\//_sl_}
-		V=LOADER_FLAGS_${V//[^[:alnum:]_]/_ot_}
-		eval "$V=."
-	}
-
-	function loader_flagged {
-		local V
-		V=${1//./_dt_}
-		V=${V// /_sp_}
-		V=${V//\//_sl_}
-		V=LOADER_FLAGS_${V//[^[:alnum:]_]/_ot_}
-		[[ -n ${!V} ]]
-	}
-
-	function loader_reset_flags {
-		unset -v "${!LOADER_FLAGS_@}"
-	}
-
-	function loader_reset_paths {
-		LOADER_PATHS=()
-	}
-fi
-
-if [[ BASH_VERSINFO -ge 3 ]]; then
-	eval '
-		function loader_getcleanpath {
-			case $1 in
-			.|"")
-				__=$PWD
-				;;
-			/)
-				__=/
-				;;
-			..|../*|*/..|*/../*|./*|*/.|*/./*|*//*)
-				local T1 T2=() I=0 IFS=/
-
-				case $1 in
-				/*)
-					read -ra T1 <<< "${1#/}"
-					;;
-				*)
-					read -ra T1 <<< "${PWD#/}/$1"
-					;;
-				esac
-
-				for __ in "${T1[@]}"; do
-					case $__ in
-					..)
-						[[ I -gt 0 ]] && (( --I ))
-						continue
-						;;
-					.|"")
-						continue
-						;;
-					esac
-
-					T2[I++]=$__
-				done
-
-				__="/${T2[*]:0:I}"
-				;;
-			/*)
-				__=${1%/}
-				;;
-			*)
-				__=${PWD%/}/${1%/}
-				;;
-			esac
-		}
-	'
-else
-	function loader_getcleanpath {
-		case $1 in
-		.|'')
-			__=$PWD
-			;;
-		/)
-			__=/
-			;;
-		..|../*|*/..|*/../*|./*|*/.|*/./*|*//*)
-			local T=() I=0 IFS=/
-
-			case $1 in
-			/*)
-				__=${1#/}
-				;;
-			*)
-				__=${PWD#/}/$1
-				;;
-			esac
-
-			while read -rd / __; do
-				case $__ in
-				..)
-					[[ I -gt 0 ]] && unset 'T[--I]'
-					continue
-					;;
-				.|'')
-					continue
-					;;
-				esac
-
-				T[I++]=$__
-			done << .
-$__/
-.
-
-			__="/${T[*]}"
-			;;
-		/*)
-			__=${1%/}
-			;;
-		*)
-			__=${PWD%/}/${1%/}
-			;;
-		esac
-	}
-fi
-
-unset -v LOADER_TEST_0 LOADER_TEST_1 LOADER_TEST_2 LOADER_USE_ASSOC_ARRAYS
+unset -v LOADER_TEST_0 LOADER_TEST_1
 
 # ----------------------------------------------------------------------
-
-# * Using 'set -- $VAR' to split strings inside variables will sometimes
-#   yield different strings if one of the strings contain globs
-#   characters like *, ? and the brackets [ and ] that are also valid
-#   characters in filenames.
-
-# * Using 'read -a' to split strings to arrays yields elements
-#   that contain invalid characters when a null token is found.
-#   (Bash versions < 3.0)
 
 # * There's an odd behavior in Bash 4.3 where unsetting variables along
 #   with functions does not unset the variables.

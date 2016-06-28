@@ -1,6 +1,5 @@
 #!/usr/bin/env zsh
 
-
 # ----------------------------------------------------------------------
 
 # loader.zsh
@@ -13,11 +12,11 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader version 0 (RS0).
 #
-# Version: 0.1.2
+# Version: 0.2
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2016/06/22)
+# Aug. 29, 2009 (Last Updated 2016/06/26)
 
 # Notes:
 #
@@ -34,10 +33,10 @@
 # scope.
 #
 # This implementation script for Zsh actually is also tested to be
-# functionally compatible with versions 4.0.* and 4.1.*, but these
+# functionally compatible with versions 4.0.* and 4.1.* but these
 # earlier versions of Zsh have limited execution stack (job tables) that
 # are sometimes configured by default at small sizes and are also not
-# expandable unlike in 4.2.* and newer, so I thought that it's better to
+# expandable unlike in 4.2.* and newer so I thought that it's better to
 # exclude these versions just to keep integrity.
 #
 # If you know what you're doing you may change the conditional
@@ -54,31 +53,31 @@
 
 # ----------------------------------------------------------------------
 
-
 if [ "$LOADER_ACTIVE" = true ]; then
-	echo "loader: loader cannot be loaded twice."
-	exit 1
-fi
-if [ -z "$ZSH_VERSION" ]; then
-	echo "loader: zsh is needed to run this script."
-	exit 1
-fi
-if ! ( eval "set -- ${ZSH_VERSION//./ }"; [ "$1" -gt 4 ] || [ "$1" -eq 4 -a "$2" -ge 2 ]; exit "$?"; ); then
-	echo "loader: only versions of zsh not earlier than 4.2.0 can work properly with this script."
-	exit 1
-fi
-if [ "$ZSH_NAME" = sh -o "$ZSH_NAME" = ksh ]; then
-	echo "loader: this script doesn't work if zsh is running in sh or ksh emulation mode."
+	echo "loader: Loader cannot be loaded twice." >&2
 	exit 1
 fi
 
+if [ -z "$ZSH_VERSION" ]; then
+	echo "loader: Zsh is needed to run this script." >&2
+	exit 1
+fi
+
+if ! ( IFS=.; set -- ${=ZSH_VERSION}; [ "$1" -gt 4 ] || [ "$1" -eq 4 -a "$2" -ge 2 ] ); then
+	echo "loader: Only versions of Zsh not earlier than 4.2.0 can work properly with this script." >&2
+	exit 1
+fi
+
+if [ "$ZSH_NAME" = sh ] || [ "$ZSH_NAME" = ksh ]; then
+	echo "loader: This script doesn't work if Zsh is running in sh or ksh emulation mode." >&2
+	exit 1
+fi
 
 #### PUBLIC VARIABLES ####
 
 typeset -g LOADER_ACTIVE=true
-typeset -g LOADER_VERSION=0.1.2
 typeset -g LOADER_RS=0
-
+typeset -g LOADER_VERSION=0.2
 
 #### PRIVATE VARIABLES ####
 
@@ -88,133 +87,109 @@ typeset -g -A LOADER_FLAGS
 typeset -g -a LOADER_PATHS
 typeset -g -A LOADER_PATHS_FLAGS
 
-
 #### PUBLIC FUNCTIONS ####
 
 function load {
-	[[ $# -eq 0 ]] && loader_fail "function called with no argument." load
+	[[ $# -eq 0 ]] && loader_fail "Function called with no argument." load
 
-	case "$1" in
+	case $1 in
 	'')
-		loader_fail "file expression cannot be null." load "$@"
+		loader_fail "File expression cannot be null." load "$@"
 		;;
 	/*|./*|../*)
 		if [[ -f $1 ]]; then
-			loader_getabspath "$1"
-
-			[[ -r $__ ]] || loader_fail "file not readable: $__" load "$@"
-
-			shift
-			loader_load "$@"
-
-			return
+			loader_getcleanpath "$1"
+			[[ -r $__ ]] || loader_fail "File not readable: $__" load "$@"
+			loader_load "$@[2,-1]"
+			__=$?
+			[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
+			return "$__"
 		fi
 		;;
 	*)
 		for __ in "${LOADER_PATHS[@]}"; do
 			[[ -f $__/$1 ]] || continue
-
-			loader_getabspath "$__/$1"
-
-			[[ -r $__ ]] || loader_fail "found file not readable: $__" load "$@"
-
+			loader_getcleanpath "$__/$1"
+			[[ -r $__ ]] || loader_fail "Found file not readable: $__" load "$@"
 			LOADER_FLAGS[$1]=.
-
-			shift
-			loader_load "$@"
-
-			return
+			loader_load "$@[2,-1]"
+			__=$?
+			[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
+			return "$__"
 		done
 		;;
 	esac
 
-	loader_fail "file not found: $1" load "$@"
+	loader_fail "File not found: $1" load "$@"
 }
 
 function include {
-	[[ $# -eq 0 ]] && loader_fail "function called with no argument." include
+	[[ $# -eq 0 ]] && loader_fail "Function called with no argument." include
 
-	case "$1" in
+	case $1 in
 	'')
-		loader_fail "file expression cannot be null." include "$@"
+		loader_fail "File expression cannot be null." include "$@"
 		;;
 	/*|./*|../*)
-		loader_getabspath "$1"
-
-		[[ -n ${LOADER_FLAGS[$__]} ]] && \
-			return
+		loader_getcleanpath "$1"
+		[[ -n ${LOADER_FLAGS[$__]} ]] && return
 
 		if [[ -f $__ ]]; then
-			[[ -r $__ ]] || loader_fail "file not readable: $__" include "$@"
-
-			shift
-			loader_load "$@"
-
-			return
+			[[ -r $__ ]] || loader_fail "File not readable: $__" include "$@"
+			loader_load "$@[2,-1]"
+			__=$?
+			[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
+			return "$__"
 		fi
 		;;
 	*)
-		[[ -n ${LOADER_FLAGS[$1]} ]] && \
-			return
+		[[ -n ${LOADER_FLAGS[$1]} ]] && return
 
 		for __ in "${LOADER_PATHS[@]}"; do
-			loader_getabspath "$__/$1"
+			loader_getcleanpath "$__/$1"
 
 			if [[ -n ${LOADER_FLAGS[$__]} ]]; then
 				LOADER_FLAGS[$1]=.
-
-				return
+				return 0
 			elif [[ -f $__ ]]; then
-				[[ -r $__ ]] || loader_fail "found file not readable: $__" include "$@"
-
+				[[ -r $__ ]] || loader_fail "Found file not readable: $__" include "$@"
 				LOADER_FLAGS[$1]=.
-
-				shift
-				loader_load "$@"
-
-				return
+				loader_load "$@[2,-1]"
+				__=$?
+				[[ $LOADER_ACTIVE == true ]] && LOADER_CS[LOADER_CS_I--]=()
+				return "$__"
 			fi
 		done
 		;;
 	esac
 
-	loader_fail "file not found: $1" include "$@"
+	loader_fail "File not found: $1" include "$@"
 }
 
 function call {
-	[[ $# -eq 0 ]] && loader_fail "function called with no argument." call
+	[[ $# -eq 0 ]] && loader_fail "Function called with no argument." call
 
-	case "$1" in
+	case $1 in
 	'')
-		loader_fail "file expression cannot be null." call "$@"
+		loader_fail "File expression cannot be null." call "$@"
 		;;
 	/*|./*|../*)
 		if [[ -f $1 ]]; then
-			loader_getabspath "$1"
-
-			[[ -r $__ ]] || loader_fail "file not readable: $__" call "$@"
-
-			(
-				shift
-				loader_load "$@"
-			)
-
+			loader_getcleanpath "$1"
+			[[ -r $__ ]] || loader_fail "File not readable: $__" call "$@"
+			( loader_load "$@[2,-1]" )
 			return
 		fi
 		;;
 	*)
 		for __ in "${LOADER_PATHS[@]}"; do
 			[[ -f $__/$1 ]] || continue
-
-			loader_getabspath "$__/$1"
-
-			[[ -r $__ ]] || loader_fail "found file not readable: $__" call "$@"
+			loader_getcleanpath "$__/$1"
+			[[ -r $__ ]] || loader_fail "Found file not readable: $__" call "$@"
 
 			(
 				LOADER_FLAGS[$1]=.
-
-				shift
-				loader_load "$@"
+				loader_load "$@[2,-1]"
 			)
 
 			return
@@ -222,16 +197,15 @@ function call {
 		;;
 	esac
 
-	loader_fail "file not found: $1" call "$@"
+	loader_fail "File not found: $1" call "$@"
 }
 
 function loader_addpath {
-	for __ in "$@"; do
-		[[ -d $__ ]] || loader_fail "directory not found: $__" loader_addpath "$@"
-		[[ -x $__ ]] || loader_fail "directory not accessible: $__" loader_addpath "$@"
-		[[ -r $__ ]] || loader_fail "directory not searchable: $__" loader_addpath "$@"
-
-		loader_getabspath_ "$__/."
+	for __; do
+		[[ -d $__ ]] || loader_fail "Directory not found: $__" loader_addpath "$@"
+		[[ -x $__ ]] || loader_fail "Directory not accessible: $__" loader_addpath "$@"
+		[[ -r $__ ]] || loader_fail "Directory not searchable: $__" loader_addpath "$@"
+		loader_getcleanpath "$__"
 
 		if [[ -z ${LOADER_PATHS_FLAGS[$__]} ]]; then
 			LOADER_PATHS[${#LOADER_PATHS[@]}+1]=$__
@@ -241,8 +215,8 @@ function loader_addpath {
 }
 
 function loader_flag {
-	[[ $# -eq 1 ]] || loader_fail "function requires a single argument." loader_flag "$@"
-	loader_getabspath "$1"
+	[[ $# -eq 1 ]] || loader_fail "Function requires a single argument." loader_flag "$@"
+	loader_getcleanpath "$1"
 	LOADER_FLAGS[$__]=.
 }
 
@@ -257,165 +231,130 @@ function loader_reset {
 		set -A LOADER_PATHS
 		set -A LOADER_PATHS_FLAGS
 	else
-		loader_fail "invalid argument: $1" loader_reset "$@"
+		loader_fail "Invalid argument: $1" loader_reset "$@"
 	fi
 }
 
 function loader_finish {
 	LOADER_ACTIVE=false
 
-	unset \
-		load \
-		include \
-		call \
-		loader_addpath \
-		loader_fail \
-		loader_finish \
-		loader_flag \
-		loader_getabspath \
-		loader_getabspath_ \
-		loader_load \
-		loader_load_ \
-		loader_reset \
-		LOADER_CS \
-		LOADER_CS_I \
-		LOADER_FLAGS \
-		LOADER_PATHS \
+	unset -v LOADER_CS LOADER_CS_I LOADER_FLAGS LOADER_PATHS \
 		LOADER_PATHS_FLAGS
-}
 
+	unset -f load include call loader_addpath loader_fail \
+		loader_finish loader_flag loader_getcleanpath loader_load \
+		loader_reset
+}
 
 #### PRIVATE FUNCTIONS ####
 
 function loader_load {
 	LOADER_FLAGS[$__]=.
-
 	LOADER_CS[++LOADER_CS_I]=$__
-
-	loader_load_ "$@"
-
-	__=$?
-	[[ LOADER_CS_I -gt 0 ]] && LOADER_CS[LOADER_CS_I--]=()
-	return "$__"
-}
-
-function loader_load_ {
 	. "$__"
 }
 
-function loader_getabspath {
-	case "$1" in
+function loader_getcleanpath {
+	case $1 in
 	.|'')
-		case "$PWD" in
-		/)
-			__=/.
-			;;
-		*)
-			__=${PWD%/}
-			;;
-		esac
+		__=$PWD
+		;;
+	/)
+		__=/
 		;;
 	..|../*|*/..|*/../*|./*|*/.|*/./*|*//*)
-		loader_getabspath_ "$1"
-		;;
-	/*)
-		__=$1
-		;;
-	*)
-		__=${PWD%/}/$1
-		;;
-	esac
-}
+		local T I=0 IFS=/
+		set -A T
 
-function loader_getabspath_ {
-	local -a TOKENS; set -A TOKENS
-	local -i I=0
-	local IFS=/ T
-
-	__=$1
-
-	case "$1" in
-	/*)
-		set -- ${=1}
-		;;
-	*)
-		set -- ${=PWD} ${=1}
-		;;
-	esac
-
-	for T; do
-		case "$T" in
-		..)
-			[[ I -ne 0 ]] && TOKENS[I--]=()
-			continue
+		case $1 in
+		/*)
+			set -- ${=1#/}
 			;;
-		.|'')
-			continue
+		*)
+			set -- ${=PWD#/} ${=1}
 			;;
 		esac
 
-		TOKENS[++I]=$T
-	done
+		for __; do
+			case $__ in
+			..)
+				[[ I -gt 0 ]] && T[I--]=()
+				continue
+				;;
+			.|'')
+				continue
+				;;
+			esac
 
-	case "$__" in
-	*/)
-		[[ I -ne 0 ]] && __="/${TOKENS[*]}/" || __=/
+			T[++I]=$__
+		done
+
+		__="/${T[*]}"
+		;;
+	/*)
+		__=${1%/}
 		;;
 	*)
-		[[ I -ne 0 ]] && __="/${TOKENS[*]}" || __=/.
+		__=${PWD%/}/${1%/}
 		;;
 	esac
 }
 
 function loader_fail {
-	local MESSAGE=$1 FUNC=$2 A I
+	local MESSAGE=$1 FUNC=$2
 	shift 2
 
 	{
-		echo "loader: ${FUNC}(): ${MESSAGE}"
+		echo "loader: $FUNC(): $MESSAGE"
 		echo
+		echo '  Current scope:'
 
-		echo "  current scope:"
 		if [[ LOADER_CS_I -gt 0 ]]; then
-			echo "    ${LOADER_CS[LOADER_CS_I]}"
+			echo "    ${LOADER_CS[LOADER_CS_I - 1]}"
 		else
-			echo "    (main)"
+			echo '    (main)'
 		fi
+
 		echo
 
 		if [[ $# -gt 0 ]]; then
-			echo "  command:"
+			echo '  Command:'
 			echo -n "    $FUNC"
-			for A; do
-				echo -n " $A"
-			done
+			printf ' %q' "$@"
 			echo
 			echo
 		fi
 
 		if [[ LOADER_CS_I -gt 0 ]]; then
-			echo "  call stack:"
-			echo "    (main)"
-			for A in "${LOADER_CS[@]}"; do
-				echo "    -> $A"
-			done
+			echo '  Call stack:'
+			echo '    (main)'
+			printf '    -> %s\n' "${LOADER_CS[@]}"
 			echo
 		fi
 
-		echo "  search paths:"
-		if [[ ${#LOADER_PATHS[@]} -gt 0 ]]; then
-			for A in "${LOADER_PATHS[@]}"; do
-				echo "    $A"
-			done
-		else
-			echo "    (empty)"
-		fi
-		echo
+		echo '  Search paths:'
 
-		echo "  working directory:"
+		if [[ ${#LOADER_PATHS[@]} -gt 0 ]]; then
+			printf '    %s\n' "${LOADER_PATHS[@]}"
+		else
+			echo '    (empty)'
+		fi
+
+		echo
+		echo '  Working directory:'
 		echo "    $PWD"
 		echo
 	} >&2
 
 	exit 1
 }
+
+# ----------------------------------------------------------------------
+
+# * Zsh does not expand filenames after ${=VAR} so we don't have to
+#   worry about it.
+
+# * Not using 'set -A' to a local array variable seems to cause
+#   problems.
+
+# ----------------------------------------------------------------------
