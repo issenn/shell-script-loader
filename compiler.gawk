@@ -127,8 +127,7 @@
 # To know some more info about using this script, run it with the option
 # '--usage' or '--help'.
 #
-# Version: 0.WP20160629 ( Working Prototype 2016/06/29
-#                         for RS0, RS0X, RS0L and RS0S )
+# Version: 0.1
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
@@ -141,7 +140,7 @@
 
 function GLOBALS() {
 
-	compiler_version = "0.WP20160629"
+	compiler_version = "0.1"
 
 	compiler_default_output    = "/dev/stdout"
 	compiler_calls_obj_file    = "compiler.calls.obj"
