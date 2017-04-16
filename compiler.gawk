@@ -1123,8 +1123,6 @@ function compiler_walk_loadx \
 
 			cmd = compiler_find " " subprefix_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
 
-			compiler_log_debug("cmd = " cmd)
-
 			if ((cmd | getline filename) > 0) {
 				do {
 					list[list_count++] = filename
@@ -1180,8 +1178,6 @@ function compiler_walk_loadx \
 
 				cmd = compiler_find " " find_path_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
 
-				compiler_log_debug("cmd = " cmd)
-
 				if ((cmd | getline filename) > 0) {
 					do {
 						list[list_count++] = filename
@@ -1190,8 +1186,6 @@ function compiler_walk_loadx \
 					close(cmd)
 
 					prefix = compiler_getabspath(find_path)
-
-					compiler_log_debug("prefix = " prefix)
 
 					for (i = 0; i < list_count; i++) {
 						filename = list[i]
