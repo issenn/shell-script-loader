@@ -363,9 +363,9 @@ function compiler \
 			compiler_log_failure("Unable to truncate output file \"" output_file "\".")
 
 	if (compiler_temp_dir) {
-		compiler_main_obj_file = compiler_getcleanpath(compiler_temp_dir "/" compiler_main_obj_file)
-		compiler_calls_obj_file = compiler_getcleanpath(compiler_temp_dir "/" compiler_calls_obj_file)
-		compiler_complete_obj_file = compiler_getcleanpath(compiler_temp_dir "/" compiler_complete_obj_file)
+		compiler_main_obj_file = compiler_getabspath(compiler_temp_dir "/") compiler_main_obj_file
+		compiler_calls_obj_file = compiler_getabspath(compiler_temp_dir "/") compiler_calls_obj_file
+		compiler_complete_obj_file = compiler_getabspath(compiler_temp_dir "/") compiler_complete_obj_file
 	}
 
 	if (!compiler_truncate_file(compiler_main_obj_file))
@@ -439,7 +439,7 @@ function compiler \
 	# Walk throughout.
 
 	for (i = 0; i < files_count; i++) {
-		abs = compiler_getcleanpath(files[i])
+		abs = compiler_getabspath(files[i])
 
 		compiler_flags[abs] = 1
 
@@ -717,7 +717,7 @@ function compiler_walk_load \
 
 	if (base ~ /^\.?\.?\//) {
 		if (compiler_test("-f", base)) {
-			abs = compiler_getcleanpath(base)
+			abs = compiler_getabspath(base)
 
 			compiler_flags[abs] = 1
 
@@ -736,7 +736,7 @@ function compiler_walk_load \
 			if (!compiler_test("-f", compiler_paths[i] "/" base))
 				continue
 
-			abs = compiler_getcleanpath(compiler_paths[i] "/" base)
+			abs = compiler_getabspath(compiler_paths[i] "/" base)
 
 			compiler_flags[abs] = 1
 			compiler_flags[base] = 1
@@ -803,7 +803,7 @@ function compiler_walk_include \
 	}
 
 	if (base ~ /^\.?\.?\//) {
-		abs = compiler_getcleanpath(base)
+		abs = compiler_getabspath(base)
 
 		if (abs in compiler_flags) {
 			if (co_statements)
@@ -834,7 +834,7 @@ function compiler_walk_include \
 		}
 
 		for (i = 0; i < compiler_paths_count; i++) {
-			abs = compiler_getcleanpath(compiler_paths[i] "/" base)
+			abs = compiler_getabspath(compiler_paths[i] "/" base)
 
 			if (abs in compiler_flags) {
 				compiler_flags[base] = 1
@@ -913,7 +913,7 @@ function compiler_walk_call \
 	leading_spaces = gensub(/[^ \t].*$/, "", 1, compiler_walk_current_line)
 
 	if (base ~ /^\.?\.?\//) {
-		abs = compiler_getcleanpath(base)
+		abs = compiler_getabspath(base)
 
 		if (abs in compiler_calls_hashes) {
 			funcname = compiler_calls_hashes[abs]
@@ -944,7 +944,7 @@ function compiler_walk_call \
 		}
 
 		for (i = 0; i < compiler_paths_count; i++) {
-			abs =  compiler_getcleanpath(compiler_paths[i] "/" base)
+			abs =  compiler_getabspath(compiler_paths[i] "/" base)
 
 			if (abs in compiler_calls_hashes) {
 				funcname = compiler_calls_hashes[abs]
@@ -1045,7 +1045,7 @@ function compiler_walk_loadx \
 	if (plain) {
 		if (base ~ /^\.?\.?\//) {
 			if (compiler_test("-f", base)) {
-				abs = compiler_getcleanpath(base)
+				abs = compiler_getabspath(base)
 
 				compiler_flags[abs] = 1
 
@@ -1064,7 +1064,7 @@ function compiler_walk_loadx \
 				if (!compiler_test("-f", compiler_paths[i] "/" base))
 					continue
 
-				abs = compiler_getcleanpath(compiler_paths[i] "/" base)
+				abs = compiler_getabspath(compiler_paths[i] "/" base)
 
 				compiler_flags[abs] = 1
 				compiler_flags[base] = 1
@@ -1132,7 +1132,7 @@ function compiler_walk_loadx \
 
 				close(cmd)
 
-				prefix = compiler_getcleanpath(subprefix)
+				prefix = compiler_getabspath(subprefix)
 
 				for (i = 0; i < list_count; i++) {
 					abs = prefix list[i]
@@ -1189,7 +1189,7 @@ function compiler_walk_loadx \
 
 					close(cmd)
 
-					prefix = compiler_getcleanpath(find_path)
+					prefix = compiler_getabspath(find_path)
 
 					compiler_log_debug("prefix = " prefix)
 
@@ -1294,7 +1294,7 @@ function compiler_walk_includex \
 
 	if (plain) {
 		if (base ~ /^\.?\.?\//) {
-			abs = compiler_getcleanpath(base)
+			abs = compiler_getabspath(base)
 
 			if (abs in compiler_flags) {
 				if (co_statements)
@@ -1325,7 +1325,7 @@ function compiler_walk_includex \
 			}
 
 			for (i = 0; i < compiler_paths_count; i++) {
-				abs = compiler_getcleanpath(compiler_paths[i] "/" base)
+				abs = compiler_getabspath(compiler_paths[i] "/" base)
 
 				if (abs in compiler_flags) {
 					compiler_flags[base] = 1
@@ -1402,7 +1402,7 @@ function compiler_walk_includex \
 
 				close(cmd)
 
-				prefix = compiler_getcleanpath(subprefix)
+				prefix = compiler_getabspath(subprefix)
 
 				for (i = 0; i < list_count; i++) {
 					abs = prefix list[i]
@@ -1459,7 +1459,7 @@ function compiler_walk_includex \
 
 					close(cmd)
 
-					prefix = compiler_getcleanpath(find_path)
+					prefix = compiler_getabspath(find_path)
 
 					for (i = 0; i < list_count; i++) {
 						filename = list[i]
@@ -1565,7 +1565,7 @@ function compiler_walk_callx \
 
 	if (plain) {
 		if (base ~ /^\.?\.?\//) {
-			abs = compiler_getcleanpath(base)
+			abs = compiler_getabspath(base)
 
 			if (abs in compiler_calls_hashes) {
 				funcname = compiler_calls_hashes[abs]
@@ -1596,7 +1596,7 @@ function compiler_walk_callx \
 			}
 
 			for (i = 0; i < compiler_paths_count; i++) {
-				abs = compiler_getcleanpath(compiler_paths[i] "/" base)
+				abs = compiler_getabspath(compiler_paths[i] "/" base)
 
 				if (abs in compiler_calls_hashes) {
 					funcname = compiler_calls_hashes[abs]
@@ -1666,7 +1666,7 @@ function compiler_walk_callx \
 			cmd = compiler_find " " subprefix_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
 
 			if ((cmd | getline filename) > 0) {
-				prefix = compiler_getcleanpath(subprefix)
+				prefix = compiler_getabspath(subprefix)
 
 				do {
 					abs = prefix filename
@@ -1726,7 +1726,7 @@ function compiler_walk_callx \
 				cmd = compiler_find " " find_path_quoted " -maxdepth 1 -xtype f " test_opt " " complete_expr " -printf '%f\\n'"
 
 				if ((cmd | getline filename) > 0) {
-					prefix = compiler_getcleanpath(find_path)
+					prefix = compiler_getabspath(find_path)
 
 					do {
 						abs = prefix filename
@@ -1838,7 +1838,7 @@ function compiler_walk_flag() {
 	if (co_statements)
 		compiler_write_to_main_obj(leading_spaces ": " co_statements)
 
-	abs = compiler_getcleanpath(base)
+	abs = compiler_getabspath(base)
 
 	compiler_flags[abs] = 1
 }
@@ -1975,7 +1975,7 @@ function compiler_walk_no_parse_block_end() {
 function compiler_addpath(path) {
 	compiler_log_debug("compiler_addpath(\"" path "\")")
 
-	path = compiler_getcleanpath(path)
+	path = compiler_getabspath(path "/.")
 
 	if (!(path in compiler_paths_flags)) {
 		compiler_paths[compiler_paths_count++] = path
@@ -2120,7 +2120,9 @@ function compiler_dump(input, output, append, indent,   arrow, line) {
 	close(input)
 }
 
-function compiler_getcleanpath(path,   abs, array, c, f, nf, t, tokens) {
+function compiler_getabspath(path,   abs, array, c, f, nf, node, t, tokens) {
+	node = (path ~ /\/$/)
+
 	if (path !~ /^\//)
 		path = compiler_wd "/" path
 
@@ -2146,8 +2148,13 @@ function compiler_getcleanpath(path,   abs, array, c, f, nf, t, tokens) {
 
 		for (i = 1; i < t; ++i)
 			abs = abs "/" tokens[i]
-	} else {
+
+		if (node)
+			abs = abs "/"
+	} else if (node) {
 		abs = "/"
+	} else {
+		abs = "/."
 	}
 
 	return abs
