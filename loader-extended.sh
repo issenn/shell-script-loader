@@ -13,11 +13,11 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader Extended version 0X (RS0X).
 #
-# Version: 0X.2
+# Version: 0X.2.1
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 30, 2009 (Last Updated 2016/06/28)
+# Aug. 30, 2009 (Last Updated 2018/01/22)
 
 # Note:
 #
@@ -33,7 +33,7 @@
 
 LOADER_ACTIVE=true
 LOADER_RS=0X
-LOADER_VERSION=0X.2
+LOADER_VERSION=0X.2.1
 
 #### PUBLIC FUNCTIONS ####
 
@@ -439,7 +439,7 @@ loader_finish() {
 		loader_addpath_ loader_callx_loop_0 loader_callx_loop_1 \
 		loader_fail loader_find_file loader_find_files loader_finish \
 		loader_flag loader_flagged loader_flag_ loader_getcleanpath \
-		loader_getcleanpath_ loader_getcleanpath__ loader_gwd \
+		loader_getcleanpath_ loader_gwd \
 		loader_get_file_expr_and_subprefix loader_includex_loop_0 \
 		loader_includex_loop_1 loader_include_loop loader_list \
 		loader_load loader_load_s loader_loadx_loop_0 \
@@ -508,21 +508,21 @@ if [ -n "$BASH_VERSION" ]; then
 				}
 
 				loader_flag_() {
-					local V
-					V=${1//./_dt_}
-					V=${V// /_sp_}
-					V=${V//\//_sl_}
-					V=LOADER_FLAGS_${V//[^[:alnum:]_]/_ot_}
-					eval "$V=."
+					local v
+					v=${1//./_dt_}
+					v=${v// /_sp_}
+					v=${v//\//_sl_}
+					v=LOADER_FLAGS_${v//[^[:alnum:]_]/_ot_}
+					eval "$v=."
 				}
 
 				function loader_flagged {
-					local V
-					V=${1//./_dt_}
-					V=${V// /_sp_}
-					V=${V//\//_sl_}
-					V=LOADER_FLAGS_${V//[^[:alnum:]_]/_ot_}
-					[[ -n ${!V} ]]
+					local v
+					v=${1//./_dt_}
+					v=${v// /_sp_}
+					v=${v//\//_sl_}
+					v=LOADER_FLAGS_${v//[^[:alnum:]_]/_ot_}
+					[[ -n ${!v} ]]
 				}
 
 				function loader_reset_flags {
@@ -537,86 +537,62 @@ if [ -n "$BASH_VERSION" ]; then
 
 		unset LOADER_USE_ASSOC_ARRAYS
 
-		if [[ BASH_VERSINFO -ge 3 ]]; then
-			eval '
-				function loader_getcleanpath_ {
-					local T1 T2=() I=0 IFS=/
+		eval '
+			function loader_getcleanpath_ {
+				local t=() i=0 IFS=/
 
-					case $1 in
-					/*)
-						read -ra T1 <<< "${1#/}"
+				case $1 in
+				/*)
+					__=${1#/}
+					;;
+				*)
+					__=${PWD#/}/$1
+					;;
+				esac
+
+				case $- in
+				*f*)
+					set -- $__
+					;;
+				*)
+					set -f
+					set -- $__
+					set +f
+					;;
+				esac
+
+				for __; do
+					case $__ in
+					..)
+						(( i )) && unset "t[--i]"
+						continue
 						;;
-					*)
-						read -ra T1 <<< "${PWD#/}/$1"
-						;;
-					esac
-
-					for __ in "${T1[@]}"; do
-						case $__ in
-						..)
-							[[ I -gt 0 ]] && unset T2\[--I\]
-							continue
-							;;
-						.|"")
-							continue
-							;;
-						esac
-
-						T2[I++]=$__
-					done
-
-					__="/${T2[*]}"
-				}
-			'
-		else
-			eval '
-				function loader_getcleanpath_ {
-					local T=() I=0 IFS=/
-
-					case $1 in
-					/*)
-						__=${1#/}
-						;;
-					*)
-						__=${PWD#/}/$1
+					.|"")
+						continue
 						;;
 					esac
 
-					while read -r -d / __; do
-						case $__ in
-						..)
-							[[ I -gt 0 ]] && unset T\[--I\]
-							continue
-							;;
-						.|"")
-							continue
-							;;
-						esac
+					t[i++]=$__
+				done
 
-						T[I++]=$__
-					done << .
-$__/
-.
-
-					__="/${T[*]}"
-				}
-			'
-		fi
+				__="/${t[*]}"
+			}
+		'
 
 		if [[ BASH_VERSINFO -ge 4 ]]; then
 			eval '
 				function loader_list {
 					[[ -r $1 ]] || loader_fail "Directory not readable or searchable: $1" loader_list "$@"
 					pushd "$1" >/dev/null || loader_fail "Failed to access directory: $1" loader_list "$@"
-					local R=1
+					local r=1
 
 					if readarray -t LOADER_LIST < <(exec find -maxdepth 1 -xtype f "$LOADER_TEST_OPT" "$LOADER_REGEX_PREFIX$LOADER_FILE_EXPR" -printf %f\\n); then
 						LOADER_ABS_PREFIX=${PWD%/}/
-						R=0
+						r=0
 					fi
 
 					popd >/dev/null || loader_fail "Failed to change back to previous directory." loader_list "$@"
-					return "$R"
+					return "$r"
 				}
 			'
 		else
@@ -624,21 +600,21 @@ $__/
 				function loader_list {
 					[[ -r $1 ]] || loader_fail "Directory not readable or searchable: $1" loader_list "$@"
 					pushd "$1" >/dev/null || loader_fail "Failed to access directory: $1" loader_list "$@"
-					local R=1 I=1
+					local r=1 i=1
 
 					if read -r __; then
 						LOADER_LIST=("$__")
 
 						while read -r __; do
-							LOADER_LIST[I++]=$__
+							LOADER_LIST[i++]=$__
 						done
 
 						LOADER_ABS_PREFIX=${PWD%/}/
-						R=0
+						r=0
 					fi < <(exec find -maxdepth 1 -xtype f "$LOADER_TEST_OPT" "$LOADER_REGEX_PREFIX$LOADER_FILE_EXPR" -printf %f\\n)
 
 					popd >/dev/null || loader_fail "Failed to change back to previous directory." loader_list "$@"
-					return "$R"
+					return "$r"
 				}
 			'
 		fi
@@ -670,8 +646,8 @@ elif [ -n "$ZSH_VERSION" ]; then
 			}
 
 			function loader_getcleanpath_ {
-				local T I=0 IFS=/
-				set -A T
+				local t i=0 IFS=/
+				set -A t
 
 				case $1 in
 				/*)
@@ -685,7 +661,7 @@ elif [ -n "$ZSH_VERSION" ]; then
 				for __; do
 					case $__ in
 					..)
-						[[ I -gt 0 ]] && T[I--]=()
+						(( i )) && t[i--]=()
 						continue
 						;;
 					.|"")
@@ -693,10 +669,10 @@ elif [ -n "$ZSH_VERSION" ]; then
 						;;
 					esac
 
-					T[++I]=$__
+					t[++i]=$__
 				done
 
-				__="/${T[*]}"
+				__="/${t[*]}"
 			}
 
 			function loader_reset_flags {
@@ -711,21 +687,21 @@ elif [ -n "$ZSH_VERSION" ]; then
 			function loader_list {
 				[[ -r $1 ]] || loader_fail "Directory not readable or searchable: $1" loader_list "$@"
 				pushd "$1" >/dev/null || loader_fail "Failed to access directory: $1" loader_list "$@"
-				local R=1 I=2
+				local r=1 i=2
 
 				if read -r __; then
 					set -A LOADER_LIST "$__"
 
 					while read -r __; do
-						LOADER_LIST[I++]=$__
+						LOADER_LIST[i++]=$__
 					done
 
 					LOADER_ABS_PREFIX=${PWD%/}/
-					R=0
+					r=0
 				fi < <(exec find -maxdepth 1 -xtype f "$LOADER_TEST_OPT" "$LOADER_REGEX_PREFIX$LOADER_FILE_EXPR" -printf %f\\n)
 
 				popd >/dev/null || loader_fail "Failed to change back to previous directory." loader_list "$@"
-				return "$R"
+				return "$r"
 			}
 		'
 
@@ -794,21 +770,21 @@ else
 			if [[ $LOADER_SHELL == mksh ]]; then
 				eval '
 					loader_flag_() {
-						typeset V=${1//./_dt_}
-						V=${V// /_sp_}
-						V=${V//\//_sl_}
-						V=LOADER_FLAGS_${V//[!a-zA-Z0-9_]/_ot_}
-						typeset -n R=$V
-						R=.
+						typeset v=${1//./_dt_}
+						v=${v// /_sp_}
+						v=${v//\//_sl_}
+						v=LOADER_FLAGS_${v//[!a-zA-Z0-9_]/_ot_}
+						typeset -n r=$v
+						r=.
 					}
 
 					loader_flagged() {
-						typeset V=${1//./_dt_}
-						V=${V// /_sp_}
-						V=${V//\//_sl_}
-						V=LOADER_FLAGS_${V//[!a-zA-Z0-9_]/_ot_}
-						typeset -n R=$V
-						[[ -n $R ]]
+						typeset v=${1//./_dt_}
+						v=${v// /_sp_}
+						v=${v//\//_sl_}
+						v=LOADER_FLAGS_${v//[!a-zA-Z0-9_]/_ot_}
+						typeset -n r=$v
+						[[ -n $r ]]
 					}
 				'
 			else
@@ -836,65 +812,50 @@ else
 			}
 		fi
 
-		if [[ $LOADER_SHELL == ksh93 ]] || [[ $LOADER_SHELL == mksh ]]; then
-			__='{
-				typeset T1 T2 I=0 IFS=/
-				[[ $1 == /* ]] && __=${1#/} || __=${PWD#/}/$1
+		__='{
+			typeset t i=0 IFS=/
 
-				read -rA T1 << .
-$__
-.
+			case $1 in
+			/*)
+				__=$1
+				;;
+			*)
+				__=$PWD/$1
+				;;
+			esac
 
-				for __ in "${T1[@]}"; do
-					case $__ in
-					..)
-						[[ I -gt 0 ]] && unset T2\[--I\]
-						continue
-						;;
-					.|"")
-						continue
-						;;
-					esac
+			case $- in
+			*f*)
+				set -- $__
+				;;
+			*)
+				set -f
+				set -- $__
+				set +f
+				;;
+			esac
 
-					T2[I++]=$__
-				done
+			for __; do
+				case $__ in
+				..)
+					(( i )) && unset "t[--i]"
+					continue
+					;;
+				.|"")
+					continue
+					;;
+				esac
 
-				__="/${T2[*]}"
-			}'
+				t[i++]=$__
+			done
 
-			if [[ $LOADER_SHELL == ksh93 ]]; then
-				eval "function loader_getcleanpath_ $__"
-			else
-				eval "loader_getcleanpath_() $__"
-			fi
+			__="/${t[*]}"
+		}'
+
+		if [[ $LOADER_SHELL == ksh93 ]]; then
+			eval "function loader_getcleanpath_ $__"
 		else
-			eval '
-				loader_getcleanpath_() {
-					typeset A IFS=/ T I=0
-					[[ $1 == /* ]] && A=${1#/} || A=${PWD#/}/$1
-
-					while
-						__=${A%%/*}
-
-						case $__ in
-						..)
-							[[ I -gt 0 ]] && unset T\[--I\]
-							;;
-						.|"")
-							;;
-						*)
-							T[I++]=$__
-							;;
-						esac
-
-						[[ $A == */* ]]
-					do
-						A=${A#*/}
-					done
-
-					__="/${T[*]}"
-				}
-			'
+			eval "loader_getcleanpath_() $__"
 		fi
 
 		eval '
@@ -1236,7 +1197,6 @@ if [ -n "$LOADER_SHELL" ]; then
 		'
 	fi
 
-	loader_getcleanpath__() { :; }
 	loader_gwd() { :; }
 	loader_update_funcs() { :; }
 else
@@ -1409,6 +1369,38 @@ else
 		}
 	fi
 
+	if
+		(
+			__=$PWD
+
+			if [ -n "$__" ]; then
+				for D in / /bin /dev /etc /home /lib /opt /run /usr /var /tmp; do
+					[ ! "$D" = "$__" ] && cd "$D" && [ ! "$PWD" = "$__" ] && exit 0
+				done
+			fi
+
+			exit 1
+		) >/dev/null 2>&1
+	then
+		loader_gwd() {
+			__=$PWD
+		}
+	elif ( [ "`type pwd`" = 'pwd is a shell builtin' ] ) >/dev/null 2>&1; then
+		loader_gwd() {
+			__=`pwd`
+		}
+	else
+		loader_hash pwd
+
+		loader_gwd() {
+			__=`exec pwd`
+		}
+	fi
+
+	__=
+	loader_gwd
+	[ -z "$__" ] && echo "loader: Unable to get current directory." >&2
+
 	loader_getcleanpath() {
 		case $1 in
 		.|'')
@@ -1439,43 +1431,66 @@ else
 	}
 
 	loader_getcleanpath_() {
+		GETCLEANPATH_OLD_IFS=$IFS IFS=/
+		GETCLEANPATH_FLAGS=$-
+		set -f
+
 		case $1 in
 		/*)
-			__=`loader_getcleanpath__ "$1"`
+			set -- $1
 			;;
 		*)
 			loader_gwd
-			__=`loader_getcleanpath__ "$__/$1"`
+			set -- $__ $1
 			;;
 		esac
-	}
 
-	loader_getcleanpath__() {
-		set -f
-		IFS=/ __= L=
-		set -- $1
+		__=
 
 		while [ "$#" -gt 0 ]; do
 			case $1 in
-			..)
-				shift
-				[ -z "$L" ] && continue
-				set -- $__ "$@"
-				__= L=
-				continue
-				;;
-			.|'')
+			.|''|..)
 				shift
 				continue
 				;;
 			esac
 
-			[ -n "$L" ] && __=$__/$L
-			L=$1
+			GETCLEANPATH_TEMP=$1
 			shift
+
+			while [ "$#" -gt 0 ]; do
+				case $1 in
+				.|'')
+					shift
+					continue
+					;;
+				esac
+
+				break
+			done
+
+			case $1 in
+			..)
+				shift
+				set -- $__ "$@"
+				__=
+				continue
+				;;
+			esac
+
+			__=$__/$GETCLEANPATH_TEMP
 		done
 
-		echo "$__/$L"
+		case $GETCLEANPATH_FLAGS in
+		*f*)
+			;;
+		*)
+			set +f
+			;;
+		esac
+
+		IFS=$GETCLEANPATH_OLD_IFS
+		[ -z "$__" ] && __=/
 	}
 
 	if
@@ -1487,9 +1502,10 @@ else
 			[ "$__" = '/*/a/d 0/1/2/3/4/5/6/7/8/9' ] || exit 1
 			loader_gwd
 			[ ! "$__" = / ] && PREFIX=$__ || PREFIX=
+			__=
 			loader_getcleanpath_ './*/a/b/../c /../d 0'
 			[ "$__" = "$PREFIX/*/a/d 0" ] && exit 10
-		) >/dev/null 2>&1
+		)
 		[ "$?" -ne 10 ]
 	then
 		if ( [ "`exec getcleanpath /a/../.`" = / ] ) >/dev/null 2>&1; then
@@ -1543,41 +1559,7 @@ else
 				`
 			}
 		fi
-
-		loader_getcleanpath__() { :; }
 	fi
-
-	if
-		(
-			__=$PWD
-
-			if [ -n "$__" ]; then
-				for D in / /bin /dev /etc /home /lib /opt /run /usr /var /tmp; do
-					[ ! "$D" = "$__" ] && cd "$D" && [ ! "$PWD" = "$__" ] && exit 0
-				done
-			fi
-
-			exit 1
-		) >/dev/null 2>&1
-	then
-		loader_gwd() {
-			__=$PWD
-		}
-	elif ( [ "`type pwd`" = 'pwd is a shell builtin' ] ) >/dev/null 2>&1; then
-		loader_gwd() {
-			__=`pwd`
-		}
-	else
-		loader_hash pwd
-
-		loader_gwd() {
-			__=`exec pwd`
-		}
-	fi
-
-	__=
-	loader_gwd
-	[ -z "$__" ] && echo "loader: Unable to get current directory." >&2
 
 	loader_include_loop() {
 		return 1
@@ -1852,7 +1834,8 @@ unset LOADER_SHELL
 #   causes syntax error.  Also, when value of IFS is different, "$@"
 #   doesn't expand to multiple arguments.
 
-# * When no argument is passed to 'set --', it doesn't do anything.
+# * When no argument is passed to 'set --' in heirloom-sh, the
+#   positional parameters are not reset.
 
 # * Some shells can only contain 9 active positional parameters.
 

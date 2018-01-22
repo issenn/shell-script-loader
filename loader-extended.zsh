@@ -13,11 +13,11 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader Extended version 0X (RS0X).
 #
-# Version: 0X.2
+# Version: 0X.2.1
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 30, 2009 (Last Updated 2016/06/28)
+# Aug. 30, 2009 (Last Updated 2018/01/22)
 
 # Notes:
 #
@@ -58,14 +58,17 @@ if [ "$LOADER_ACTIVE" = true ]; then
 	echo "loader: loader cannot be loaded twice."
 	exit 1
 fi
+
 if [ -z "$ZSH_VERSION" ]; then
 	echo "loader: zsh is needed to run this script."
 	exit 1
 fi
+
 if ! ( eval "set -- ${ZSH_VERSION//./ }"; [ "$1" -gt 4 ] || [ "$1" -eq 4 -a "$2" -ge 2 ]; exit "$?" ); then
 	echo "loader: only versions of zsh not earlier than 4.2.0 can work properly with this script."
 	exit 1
 fi
+
 if [ "$ZSH_NAME" = sh -o "$ZSH_NAME" = ksh ]; then
 	echo "loader: this script doesn't work if zsh is running in sh or ksh emulation mode."
 	exit 1
@@ -75,7 +78,7 @@ fi
 
 typeset -g LOADER_ACTIVE=true
 typeset -g LOADER_RS=0X
-typeset -g LOADER_VERSION=0X.2
+typeset -g LOADER_VERSION=0X.2.1
 
 #### PRIVATE VARIABLES ####
 
@@ -624,57 +627,41 @@ function loader_load {
 }
 
 function loader_getcleanpath {
-	case $1 in
-	.|'')
-		__=$PWD
-		;;
-	/)
-		__=/
-		;;
-	..|../*|*/..|*/../*|./*|*/.|*/./*|*//*)
-		local T I=0 IFS=/
-		set -A T
+	local t i=0 IFS=/
+	set -A t
 
-		case $1 in
-		/*)
-			set -- ${=1#/}
+	case $1 in
+	/*)
+		set -- ${=1#/}
+		;;
+	*)
+		set -- ${=PWD#/} ${=1}
+		;;
+	esac
+
+	for __; do
+		case $__ in
+		..)
+			(( i )) && t[i--]=()
+			continue
 			;;
-		*)
-			set -- ${=PWD#/} ${=1}
+		.|'')
+			continue
 			;;
 		esac
 
-		for __; do
-			case $__ in
-			..)
-				[[ I -gt 0 ]] && T[I--]=()
-				continue
-				;;
-			.|'')
-				continue
-				;;
-			esac
+		t[++i]=$__
+	done
 
-			T[++I]=$__
-		done
-
-		__="/${T[*]}"
-		;;
-	/*)
-		__=${1%/}
-		;;
-	*)
-		__=${PWD%/}/${1%/}
-		;;
-	esac
+	__="/${t[*]}"
 }
 
 function loader_fail {
-	local MESSAGE=$1 FUNC=$2
+	local message=$1 func=$2
 	shift 2
 
 	{
-		echo "loader: $FUNC(): $MESSAGE"
+		echo "loader: $func(): $message"
 		echo
 		echo '  Current scope:'
 
@@ -688,7 +675,7 @@ function loader_fail {
 
 		if [[ $# -gt 0 ]]; then
 			echo '  Command:'
-			echo -n "    $FUNC"
+			echo -n "    $func"
 			printf ' %q' "$@"
 			echo
 			echo
@@ -721,19 +708,19 @@ function loader_fail {
 function loader_list {
 	[[ -r $1 ]] || loader_fail "Directory not readable or searchable: $1" loader_list "$@"
 	pushd "$1" >/dev/null || loader_fail "Failed to access directory: $1" loader_list "$@"
-	local R=1 I=2
+	local r=1 i=2
 
 	if read -r __; then
 		set -A LOADER_LIST "$__"
 
 		while read -r __; do
-			LOADER_LIST[I++]=$__
+			LOADER_LIST[i++]=$__
 		done
 
 		LOADER_ABS_PREFIX=${PWD%/}/
-		R=0
+		r=0
 	fi < <(exec find -maxdepth 1 -xtype f "$LOADER_TEST_OPT" "$LOADER_REGEX_PREFIX$LOADER_FILE_EXPR" -printf %f\\n)
 
 	popd >/dev/null || loader_fail "Failed to change back to previous directory." loader_list "$@"
-	return "$R"
+	return "$r"
 }
