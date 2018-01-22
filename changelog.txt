@@ -1,3 +1,17 @@
+------------------
+0.2.1 (2018/01/22)
+------------------
+
+- getcleanpath functions now use simpler word splitting wih filename
+  expansion temporarily disabled.  This avoids internal use of temporary
+  files and pipes.  All versions of bash now only use one version of
+  getcleanpath thanks to it.  Ksh variants also now only use two.
+
+  The generic version has also been enhanced and no longer requires a
+  subfunction summoned in a subshell.
+
+- Local variables now use lowercase characters.
+
 ----------------
 0.2 (2016/06/28)
 ----------------

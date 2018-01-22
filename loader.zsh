@@ -12,11 +12,11 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader version 0 (RS0).
 #
-# Version: 0.2
+# Version: 0.2.1
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2016/06/26)
+# Aug. 29, 2009 (Last Updated 2018/01/22)
 
 # Notes:
 #
@@ -77,7 +77,7 @@ fi
 
 typeset -g LOADER_ACTIVE=true
 typeset -g LOADER_RS=0
-typeset -g LOADER_VERSION=0.2
+typeset -g LOADER_VERSION=0.2.1
 
 #### PRIVATE VARIABLES ####
 
@@ -255,57 +255,41 @@ function loader_load {
 }
 
 function loader_getcleanpath {
-	case $1 in
-	.|'')
-		__=$PWD
-		;;
-	/)
-		__=/
-		;;
-	..|../*|*/..|*/../*|./*|*/.|*/./*|*//*)
-		local T I=0 IFS=/
-		set -A T
+	local t i=0 IFS=/
+	set -A t
 
-		case $1 in
-		/*)
-			set -- ${=1#/}
+	case $1 in
+	/*)
+		set -- ${=1#/}
+		;;
+	*)
+		set -- ${=PWD#/} ${=1}
+		;;
+	esac
+
+	for __; do
+		case $__ in
+		..)
+			(( i )) && t[i--]=()
+			continue
 			;;
-		*)
-			set -- ${=PWD#/} ${=1}
+		.|'')
+			continue
 			;;
 		esac
 
-		for __; do
-			case $__ in
-			..)
-				[[ I -gt 0 ]] && T[I--]=()
-				continue
-				;;
-			.|'')
-				continue
-				;;
-			esac
+		t[++i]=$__
+	done
 
-			T[++I]=$__
-		done
-
-		__="/${T[*]}"
-		;;
-	/*)
-		__=${1%/}
-		;;
-	*)
-		__=${PWD%/}/${1%/}
-		;;
-	esac
+	__="/${t[*]}"
 }
 
 function loader_fail {
-	local MESSAGE=$1 FUNC=$2
+	local message=$1 func=$2
 	shift 2
 
 	{
-		echo "loader: $FUNC(): $MESSAGE"
+		echo "loader: $func(): $message"
 		echo
 		echo '  Current scope:'
 
@@ -319,7 +303,7 @@ function loader_fail {
 
 		if [[ $# -gt 0 ]]; then
 			echo '  Command:'
-			echo -n "    $FUNC"
+			echo -n "    $func"
 			printf ' %q' "$@"
 			echo
 			echo

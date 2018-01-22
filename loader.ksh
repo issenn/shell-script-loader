@@ -13,11 +13,11 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader version 0 (RS0)
 #
-# Version: 0.2
+# Version: 0.2.1
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2016/06/28)
+# Aug. 29, 2009 (Last Updated 2018/01/22)
 
 # Limitations of Shell Script Loader in PD KSH:
 #
@@ -68,7 +68,7 @@ fi
 
 LOADER_ACTIVE=true
 LOADER_RS=0
-LOADER_VERSION=0.2
+LOADER_VERSION=0.2.1
 
 #### PRIVATE VARIABLES ####
 
@@ -233,11 +233,11 @@ loader_finish() {
 	loader_reset_flags
 
 	unset -v LOADER_CS LOADER_CS_I LOADER_FLAGS LOADER_PATHS \
-		LOADER_PATHS_FLAGS
+			LOADER_PATHS_FLAGS
 
 	unset -f load include call loader_addpath loader_addpath_ \
-		loader_fail loader_flagged loader_flag loader_flag_ \
-		loader_getcleanpath loader_load loader_reset
+			loader_fail loader_flagged loader_flag loader_flag_ \
+			loader_getcleanpath loader_load loader_reset
 }
 
 #### PRIVATE FUNCTIONS ####
@@ -248,32 +248,12 @@ loader_load() {
 	. "$__"
 }
 
-loader_getcleanpath() {
-	case $1 in
-	.|'')
-		__=$PWD
-		;;
-	/)
-		__=/
-		;;
-	..|../*|*/..|*/../*|./*|*/.|*/./*|*//*)
-		loader_getcleanpath_ "$1"
-		;;
-	/*)
-		__=${1%/}
-		;;
-	*)
-		__=${PWD%/}/${1%/}
-		;;
-	esac
-}
-
 loader_fail() {
-	MESSAGE=$1 FUNC=$2
+	message=$1 func=$2
 	shift 2
 
 	{
-		echo "loader: $FUNC(): $MESSAGE"
+		echo "loader: $func(): $message"
 		echo
 		echo "  Current scope:"
 
@@ -287,7 +267,7 @@ loader_fail() {
 
 		if [[ $# -gt 0 ]]; then
 			echo "  Command:"
-			print -rn "    $FUNC"
+			print -rn "    $func"
 
 			for __; do
 				print -rn " \"$__\""
@@ -300,11 +280,11 @@ loader_fail() {
 		if [[ LOADER_CS_I -gt 0 ]]; then
 			echo "  Call stack:"
 			echo "    (main)"
-			I=1
+			typeset i=1
 
-			while [[ I -le LOADER_CS_I ]]; do
-				print -r "    -> ${LOADER_CS[I]}"
-				(( ++I ))
+			while [[ i -le LOADER_CS_I ]]; do
+				print -r "    -> ${LOADER_CS[i]}"
+				(( ++i ))
 			done
 
 			echo
@@ -371,21 +351,23 @@ else
 
 	if [[ $LOADER_SHELL == mksh ]]; then
 		loader_flag_() {
-			typeset V=${1//./_dt_}
-			V=${V// /_sp_}
-			V=${V//\//_sl_}
-			V=LOADER_FLAGS_${V//[!a-zA-Z0-9_]/_ot_}
-			typeset -n R=$V
-			R=.
+			typeset v
+			v=${1//./_dt_}
+			v=${v// /_sp_}
+			v=${v//\//_sl_}
+			v=LOADER_FLAGS_${v//[!a-zA-Z0-9_]/_ot_}
+			typeset -n r=$v
+			r=.
 		}
 
 		loader_flagged() {
-			typeset V=${1//./_dt_}
-			V=${V// /_sp_}
-			V=${V//\//_sl_}
-			V=LOADER_FLAGS_${V//[!a-zA-Z0-9_]/_ot_}
-			typeset -n R=$V
-			[[ -n $R ]]
+			typeset v
+			v=${1//./_dt_}
+			v=${v// /_sp_}
+			v=${v//\//_sl_}
+			v=LOADER_FLAGS_${v//[!a-zA-Z0-9_]/_ot_}
+			typeset -n r=$v
+			[[ -n $r ]]
 		}
 	else
 		hash sed
@@ -412,63 +394,50 @@ else
 	}
 fi
 
-if [[ $LOADER_SHELL == ksh93 || $LOADER_SHELL == mksh ]]; then
-	__='{
-		typeset T1 T2 I=0 IFS=/
-		[[ $1 == /* ]] && __=${1#/} || __=${PWD#/}/$1
+__='{
+	typeset t i=0 IFS=/
 
-		read -rA T1 << .
-$__
-.
+	case $1 in
+	/*)
+		__=$1
+		;;
+	*)
+		__=$PWD/$1
+		;;
+	esac
 
-		for __ in "${T1[@]}"; do
-			case $__ in
-			..)
-				[[ I -gt 0 ]] && unset T2\[--I\]
-				continue
-				;;
-			.|"")
-				continue
-				;;
-			esac
+	case $- in
+	*f*)
+		set -- $__
+		;;
+	*)
+		set -f
+		set -- $__
+		set +f
+		;;
+	esac
 
-			T2[I++]=$__
-		done
+	for __; do
+		case $__ in
+		..)
+			(( i )) && unset "t[--i]"
+			continue
+			;;
+		.|"")
+			continue
+			;;
+		esac
 
-		__="/${T2[*]}"
-	}'
+		t[i++]=$__
+	done
 
-	if [[ $LOADER_SHELL == ksh93 ]]; then
-		eval "function loader_getcleanpath_ $__"
-	else
-		eval "loader_getcleanpath_() $__"
-	fi
+	__="/${t[*]}"
+}'
+
+if [[ $LOADER_SHELL == ksh93 ]]; then
+	eval "function loader_getcleanpath $__"
 else
-	loader_getcleanpath_() {
-		typeset A IFS=/ T I=0
-		[[ $1 == /* ]] && A=${1#/} || A=${PWD#/}/$1
-
-		while
-			__=${A%%/*}
-
-			case $__ in
-			..)
-				[[ I -gt 0 ]] && unset 'T[--I]'
-				;;
-			.|'')
-				;;
-			*)
-				T[I++]=$__
-				;;
-			esac
-
-			[[ $A == */* ]]
-		do
-			A=${A#*/}
-		done
-
-		__="/${T[*]}"
-	}
+	eval "loader_getcleanpath() $__"
 fi
 
 unset -v LOADER_SHELL
@@ -514,5 +483,10 @@ unset -v LOADER_SHELL
 # * Declaring functions in bourne-shell format is intuitively more
 #   efficient for PD KSH and mksh since it doesn't touch $0 and doesn't
 #   store OPTIND and shell options for local scoping.
+
+# * PD KSH's 'set -A' doesn't seem to work well with local variables,
+#   but it turns out we don't need it since all variants of ksh resets
+#   local variables to empty value.  This means we don't need to create
+#   another version of getcleanpath for PD KSH.
 
 # ----------------------------------------------------------------------

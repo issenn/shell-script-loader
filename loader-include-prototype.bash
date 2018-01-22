@@ -12,7 +12,7 @@
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# June 25, 2016
+# June 25, 2016 (Last Updated 2018/01/22)
 
 # ----------------------------------------------------------------------
 
@@ -79,31 +79,43 @@ function loader_load {
 }
 
 function loader_getcleanpath {
-	local T1 T2=() I=0 IFS=/
+	local t=() i=0 IFS=/
 
 	case $1 in
 	/*)
-		read -ra T1 <<< "${1#/}"
+		__=${1#/}
 		;;
 	*)
-		read -ra T1 <<< "${PWD#/}/$1"
+		__=${PWD#/}/$1
 		;;
 	esac
 
-	for __ in "${T1[@]}"; do
+	case $- in
+	*f*)
+		set -- $__
+		;;
+	*)
+		set -f
+		set -- $__
+		set +f
+		;;
+	esac
+
+	for __; do
 		case $__ in
 		..)
-			[[ I -gt 0 ]] && (( --I ))
+			(( i )) && unset 't[--i]'
+			continue
 			;;
 		.|'')
-			;;
-		*)
-			T2[I++]=$__
+			continue
 			;;
 		esac
+
+		t[i++]=$__
 	done
 
-	__="/${T2[*]:0:I}"
+	__="/${t[*]}"
 }
 
 function loader_fail {

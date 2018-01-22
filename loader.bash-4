@@ -18,11 +18,11 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader version 0 (RS0).
 #
-# Version: 0.2
+# Version: 0.2.1
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# June 28, 2016
+# January 18, 2018 (Last Updated 2018/01/22)
 
 # Limitations of Shell Script Loader with integers and associative
 # arrays:
@@ -91,7 +91,7 @@ fi
 
 LOADER_ACTIVE=true
 LOADER_RS=0
-LOADER_VERSION=0.2
+LOADER_VERSION=0.2.1
 
 #### PRIVATE VARIABLES ####
 
@@ -277,64 +277,59 @@ function loader_load {
 }
 
 function loader_getcleanpath {
-	case $1 in
-	.|'')
-		__=$PWD
-		;;
-	/)
-		__=/
-		;;
-	..|../*|*/..|*/../*|./*|*/.|*/./*|*//*)
-		local T1 T2=() I=0 IFS=/
+	local t=() i=0 IFS=/
 
-		case $1 in
-		/*)
-			read -ra T1 <<< "${1#/}"
+	case $1 in
+	/*)
+		__=${1#/}
+		;;
+	*)
+		__=${PWD#/}/$1
+		;;
+	esac
+
+	case $- in
+	*f*)
+		set -- $__
+		;;
+	*)
+		set -f
+		set -- $__
+		set +f
+		;;
+	esac
+
+	for __; do
+		case $__ in
+		..)
+			(( i )) && unset 't[--i]'
+			continue
 			;;
-		*)
-			read -ra T1 <<< "${PWD#/}/$1"
+		.|'')
+			continue
 			;;
 		esac
 
-		for __ in "${T1[@]}"; do
-			case $__ in
-			..)
-				[[ I -gt 0 ]] && (( --I ))
-				continue
-				;;
-			.|'')
-				continue
-				;;
-			esac
+		t[i++]=$__
+	done
 
-			T2[I++]=$__
-		done
-
-		__="/${T2[*]:0:I}"
-		;;
-	/*)
-		__=${1%/}
-		;;
-	*)
-		__=${PWD%/}/${1%/}
-		;;
-	esac
+	__="/${t[*]}"
 }
 
 function loader_fail {
-	local MESSAGE=$1 FUNC=$2 MAIN='(main)'
-	[[ -n $0 && ${0##*/} != "${BASH##*/}" ]] && MAIN=$0
+	local message=$1 func=$2 main='(main)'
+	[[ -n $0 && ${0##*/} != "${BASH##*/}" ]] && main=$0
 	shift 2
 
 	{
-		echo "loader: $FUNC(): $MESSAGE"
+		echo "loader: $func(): $message"
 		echo
 		echo '  Current scope:'
 
 		if [[ LOADER_CS_I -gt 0 ]]; then
 			echo "    ${LOADER_CS[LOADER_CS_I]}"
 		else
-			echo "    $MAIN"
+			echo "    $main"
 		fi
 
 		echo
@@ -342,13 +337,13 @@ function loader_fail {
 		if [[ $# -gt 0 ]]; then
 			echo '  Command:'
 			printf -v __ ' %q' "$@"
-			echo "    $FUNC$__"
+			echo "    $func$__"
 			echo
 		fi
 
 		if [[ LOADER_CS_I -gt 0 ]]; then
 			echo '  Call stack:'
-			echo "    $MAIN"
+			echo "    $main"
 			printf '    -> %s\n' "${LOADER_CS[@]}"
 			echo
 		fi
