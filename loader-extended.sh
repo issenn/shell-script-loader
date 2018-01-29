@@ -13,11 +13,11 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader Extended version 0X (RS0X).
 #
-# Version: 0X.2.1
+# Version: 0X.2.2
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 30, 2009 (Last Updated 2018/01/22)
+# Aug. 30, 2009 (Last Updated 2018/01/29)
 
 # Note:
 #
@@ -33,7 +33,7 @@
 
 LOADER_ACTIVE=true
 LOADER_RS=0X
-LOADER_VERSION=0X.2.1
+LOADER_VERSION=0X.2.2
 
 #### PUBLIC FUNCTIONS ####
 
@@ -393,8 +393,7 @@ callx() {
 }
 
 loader_addpath() {
-	for __
-	do
+	for __ do
 		[ -d "$__" ] || loader_fail "Directory not found: $__" loader_addpath "$@"
 		[ -x "$__" ] || loader_fail "Directory not accessible: $__" loader_addpath "$@"
 		[ -r "$__" ] || loader_fail "Directory not searchable: $__" loader_addpath "$@"
@@ -429,22 +428,23 @@ loader_finish() {
 	loader_reset_flags
 
 	unset LOADER_ABS_PREFIX LOADER_CS LOADER_CS_I LOADER_EXPR \
-		LOADER_FILE_EXPR LOADER_FLAGS LOADER_LIST LOADER_LIST_I \
-		LOADER_OWD LOADER_P LOADER_PATHS LOADER_PATHS_FLAGS LOADER_R \
-		LOADER_REGEX_PREFIX LOADER_SCOPE LOADER_SHIFTS_0 \
-		LOADER_SHIFTS_1 LOADER_STORE_SCOPE LOADER_SUBPREFIX \
-		LOADER_TEST_OPT LOADER_V
+			LOADER_FILE_EXPR LOADER_FLAGS LOADER_GCP_OLD_FLAGS \
+			LOADER_GCP_OLD_IFS LOADER_GCP_TEMP LOADER_LIST \
+			LOADER_LIST_I LOADER_OWD LOADER_P LOADER_PATHS \
+			LOADER_PATHS_FLAGS LOADER_R LOADER_REGEX_PREFIX \
+			LOADER_SCOPE LOADER_SHIFTS_0 LOADER_SHIFTS_1 \
+			LOADER_STORE_SCOPE LOADER_SUBPREFIX LOADER_TEST_OPT LOADER_V
 
 	unset -f load include call loadx includex callx loader_addpath \
-		loader_addpath_ loader_callx_loop_0 loader_callx_loop_1 \
-		loader_fail loader_find_file loader_find_files loader_finish \
-		loader_flag loader_flagged loader_flag_ loader_getcleanpath \
-		loader_getcleanpath_ loader_gwd \
-		loader_get_file_expr_and_subprefix loader_includex_loop_0 \
-		loader_includex_loop_1 loader_include_loop loader_list \
-		loader_load loader_load_s loader_loadx_loop_0 \
-		loader_loadx_loop_1 loader_reset loader_reset_flags \
-		loader_reset_paths loader_revert_scope loader_update_funcs
+			loader_addpath_ loader_callx_loop_0 loader_callx_loop_1 \
+			loader_fail loader_find_file loader_find_files \
+			loader_finish loader_flag loader_flagged loader_flag_ \
+			loader_getcleanpath loader_getcleanpath_ loader_gwd \
+			loader_get_file_expr_and_subprefix loader_includex_loop_0 \
+			loader_includex_loop_1 loader_include_loop loader_list \
+			loader_load loader_load_s loader_loadx_loop_0 \
+			loader_loadx_loop_1 loader_reset loader_reset_flags \
+			loader_reset_paths loader_revert_scope loader_update_funcs
 }
 
 #### PRIVATE VARIABLES AND SHELL-DEPENDENT FUNCTIONS ####
@@ -512,7 +512,7 @@ if [ -n "$BASH_VERSION" ]; then
 					v=${1//./_dt_}
 					v=${v// /_sp_}
 					v=${v//\//_sl_}
-					v=LOADER_FLAGS_${v//[^[:alnum:]_]/_ot_}
+					v=LOADER_FLAGS_${v//[![:alnum:]_]/_ot_}
 					eval "$v=."
 				}
 
@@ -521,7 +521,7 @@ if [ -n "$BASH_VERSION" ]; then
 					v=${1//./_dt_}
 					v=${v// /_sp_}
 					v=${v//\//_sl_}
-					v=LOADER_FLAGS_${v//[^[:alnum:]_]/_ot_}
+					v=LOADER_FLAGS_${v//[![:alnum:]_]/_ot_}
 					[[ -n ${!v} ]]
 				}
 
@@ -773,7 +773,7 @@ else
 						typeset v=${1//./_dt_}
 						v=${v// /_sp_}
 						v=${v//\//_sl_}
-						v=LOADER_FLAGS_${v//[!a-zA-Z0-9_]/_ot_}
+						v=LOADER_FLAGS_${v//[!A-Za-z0-9_]/_ot_}
 						typeset -n r=$v
 						r=.
 					}
@@ -782,29 +782,29 @@ else
 						typeset v=${1//./_dt_}
 						v=${v// /_sp_}
 						v=${v//\//_sl_}
-						v=LOADER_FLAGS_${v//[!a-zA-Z0-9_]/_ot_}
+						v=LOADER_FLAGS_${v//[!A-Za-z0-9_]/_ot_}
 						typeset -n r=$v
 						[[ -n $r ]]
 					}
 				'
 			else
-				hash sed
-
 				loader_flag_() {
-					eval "LOADER_FLAGS_$(echo "$1" | sed 's/\./_dt_/g; s/\//_sl_/g; s/ /_sp_/g; s/[^[:alnum:]_]/_ot_/g')=."
+					typeset v
+					v=`echo "$1" | sed 's/\./_dt_/g; s/ /_sp_/g; s/\//_sl_/g; s/[^A-Za-z0-9_]/_ot_/g'` || exit 1
+					eval "LOADER_FLAGS_$v=."
 				}
 
 				loader_flagged() {
-					eval "[[ -n \$LOADER_FLAGS_$(echo "$1" | sed 's/\./_dt_/g; s/\//_sl_/g; s/ /_sp_/g; s/[^[:alnum:]_]/_ot_/g') ]]"
+					typeset v
+					v=`echo "$1" | sed 's/\./_dt_/g; s/ /_sp_/g; s/\//_sl_/g; s/[^A-Za-z0-9_]/_ot_/g'` || exit 1
+					eval "[[ -n \$LOADER_FLAGS_$v ]]"
 				}
 			fi
 
-			hash grep cut
-
 			loader_reset_flags() {
-				typeset IFS='
-'
-				unset `set | grep -a ^LOADER_FLAGS_ | cut -f 1 -d =`
+				typeset v IFS=' '
+				v=`set | awk -F= '/^LOADER_FLAGS_/ { print $1 }' ORS=' '` || exit 1
+				unset $v
 			}
 
 			loader_reset_paths() {
@@ -817,10 +817,10 @@ else
 
 			case $1 in
 			/*)
-				__=$1
+				__=${1#/}
 				;;
 			*)
-				__=$PWD/$1
+				__=${PWD#/}/$1
 				;;
 			esac
 
@@ -1205,20 +1205,13 @@ else
 	LOADER_SCOPE='(main)'
 	LOADER_STORE_SCOPE=set
 
-	if ( [ "`type hash`" = 'hash is a shell builtin' ] ) >/dev/null 2>&1; then
-		loader_hash() { hash "$@"; }
-	else
-		loader_hash() { :; }
-	fi
-
 	loader_addpath_() {
 		LOADER_P=$1
 
 		if [ -n "$LOADER_PATHS" ]; then
 			eval "set -- $LOADER_PATHS"
 
-			for __
-			do
+			for __ do
 				[ "$__" = "$LOADER_P" ] && return
 			done
 		fi
@@ -1247,8 +1240,7 @@ else
 				echo "  Command:"
 				CMD="    $FUNC"
 
-				for __
-				do
+				for __ do
 					CMD=$CMD" \"$__\""
 				done
 
@@ -1261,8 +1253,7 @@ else
 			if [ -n "$LOADER_PATHS" ]; then
 				eval "set -- $LOADER_PATHS"
 
-				for __
-				do
+				for __ do
 					echo "    $__"
 				done
 			else
@@ -1294,7 +1285,7 @@ else
 				__=${__//./_dt_} && \
 				__=${__// /_sp_} && \
 				__=${__//\//_sl_} && \
-				__=${__//[^A-Za-z0-9_]/_ot_} && \
+				__=${__//[!A-Za-z0-9_]/_ot_} && \
 				[ "$__" = "ABCabc_dt__sp__sl__ot__ot_" ] && \
 				exit 10
 			'
@@ -1306,7 +1297,7 @@ else
 				LOADER_V=${1//./_dt_}
 				LOADER_V=${LOADER_V// /_sp_}
 				LOADER_V=${LOADER_V//\//_sl_}
-				LOADER_V=LOADER_FLAGS_${LOADER_V//[^A-Za-z0-9_]/_ot_}
+				LOADER_V=LOADER_FLAGS_${LOADER_V//[!A-Za-z0-9_]/_ot_}
 				eval "$LOADER_V=."
 				LOADER_FLAGS=$LOADER_FLAGS\ $LOADER_V
 			}
@@ -1315,21 +1306,19 @@ else
 				LOADER_V=${1//./_dt_}
 				LOADER_V=${LOADER_V// /_sp_}
 				LOADER_V=${LOADER_V//\//_sl_}
-				LOADER_V=LOADER_FLAGS_${LOADER_V//[^A-Za-z0-9_]/_ot_}
+				LOADER_V=LOADER_FLAGS_${LOADER_V//[!A-Za-z0-9_]/_ot_}
 				eval "[ -n \"\$$LOADER_V\" ]"
 			}
 		'
 	else
-		loader_hash sed
-
 		loader_flag_() {
-			LOADER_V=LOADER_FLAGS_`echo "$1" | sed 's/\./_dt_/g; s/ /_sp_/g; s/\//_sl_/g; s/[^[:alnum:]_]/_ot_/g'`
+			LOADER_V=LOADER_FLAGS_`echo "$1" | sed 's/\./_dt_/g; s/ /_sp_/g; s/\//_sl_/g; s/[^A-Za-z0-9_]/_ot_/g'` || exit 1
 			eval "$LOADER_V=."
 			LOADER_FLAGS=$LOADER_FLAGS\ $LOADER_V
 		}
 
 		loader_flagged() {
-			LOADER_V=LOADER_FLAGS_`echo "$1" | sed 's/\./_dt_/g; s/ /_sp_/g; s/\//_sl_/g; s/[^[:alnum:]_]/_ot_/g'`
+			LOADER_V=LOADER_FLAGS_`echo "$1" | sed 's/\./_dt_/g; s/ /_sp_/g; s/\//_sl_/g; s/[^A-Za-z0-9_]/_ot_/g'` || exit 1
 			eval "[ -n \"\$$LOADER_V\" ]"
 		}
 	fi
@@ -1353,13 +1342,11 @@ else
 			}
 		'
 	else
-		loader_hash sed
-
 		loader_get_file_expr_and_subprefix() {
 			case $1 in
 			*/*)
-				LOADER_FILE_EXPR=`echo "$1" | sed 's@.*/@@'`
-				LOADER_SUBPREFIX=`echo "$1" | sed 's@[^/]\+$@@'`
+				LOADER_FILE_EXPR=`echo "$1" | sed 's@.*/@@'` || exit 1
+				LOADER_SUBPREFIX=`echo "$1" | sed 's@[^/]*$@@'` || exit 1
 				;;
 			*)
 				LOADER_FILE_EXPR=$1
@@ -1375,7 +1362,10 @@ else
 
 			if [ -n "$__" ]; then
 				for D in / /bin /dev /etc /home /lib /opt /run /usr /var /tmp; do
-					[ ! "$D" = "$__" ] && cd "$D" && [ ! "$PWD" = "$__" ] && exit 0
+					if [ ! "$D" = "$__" ] && cd "$D"; then
+						[ ! "$PWD" = "$__" ]
+						exit "$?"
+					fi
 				done
 			fi
 
@@ -1385,21 +1375,18 @@ else
 		loader_gwd() {
 			__=$PWD
 		}
-	elif ( [ "`type pwd`" = 'pwd is a shell builtin' ] ) >/dev/null 2>&1; then
+	elif ( [ "`type pwd`" = 'pwd is a shell builtin' ] && [ "`cd / && pwd`" = / ] ) >/dev/null 2>&1; then
 		loader_gwd() {
 			__=`pwd`
 		}
-	else
-		loader_hash pwd
-
+	elif ( [ "`cd / && exec pwd`" = / ] ) >/dev/null 2>&1; then
 		loader_gwd() {
-			__=`exec pwd`
+			__=`exec pwd` || exit 1
 		}
+	else
+		echo "loader: Unable to get current directory." >&2
+		exit 1
 	fi
-
-	__=
-	loader_gwd
-	[ -z "$__" ] && echo "loader: Unable to get current directory." >&2
 
 	loader_getcleanpath() {
 		case $1 in
@@ -1431,8 +1418,8 @@ else
 	}
 
 	loader_getcleanpath_() {
-		GETCLEANPATH_OLD_IFS=$IFS IFS=/
-		GETCLEANPATH_FLAGS=$-
+		LOADER_GCP_OLD_IFS=$IFS IFS=/
+		LOADER_GCP_OLD_FLAGS=$-
 		set -f
 
 		case $1 in
@@ -1455,7 +1442,7 @@ else
 				;;
 			esac
 
-			GETCLEANPATH_TEMP=$1
+			LOADER_GCP_TEMP=$1
 			shift
 
 			while [ "$#" -gt 0 ]; do
@@ -1478,10 +1465,10 @@ else
 				;;
 			esac
 
-			__=$__/$GETCLEANPATH_TEMP
+			__=$__/$LOADER_GCP_TEMP
 		done
 
-		case $GETCLEANPATH_FLAGS in
+		case $LOADER_GCP_OLD_FLAGS in
 		*f*)
 			;;
 		*)
@@ -1489,7 +1476,7 @@ else
 			;;
 		esac
 
-		IFS=$GETCLEANPATH_OLD_IFS
+		IFS=$LOADER_GCP_OLD_IFS
 		[ -z "$__" ] && __=/
 	}
 
@@ -1509,14 +1496,10 @@ else
 		[ "$?" -ne 10 ]
 	then
 		if ( [ "`exec getcleanpath /a/../.`" = / ] ) >/dev/null 2>&1; then
-			loader_hash getcleanpath
-
 			loader_getcleanpath_() {
-				__=`exec getcleanpath "$1"`
+				__=`exec getcleanpath "$1"` || exit 1
 			}
 		else
-			loader_hash awk
-
 			loader_getcleanpath_() {
 				loader_gwd
 
@@ -1556,7 +1539,7 @@ else
 							exit
 						}
 					' "$1" "$__"
-				`
+				` || exit 1
 			}
 		fi
 	fi
@@ -1813,8 +1796,6 @@ else
 
 		return "$LOADER_R"
 	}
-
-	unset -f loader_hash
 fi
 
 unset LOADER_SHELL

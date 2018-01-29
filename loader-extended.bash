@@ -17,11 +17,11 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader Extended version 0X (RS0X).
 #
-# Version: 0X.2.1
+# Version: 0X.2.2
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 30, 2009 (Last Updated 2018/01/22)
+# Aug. 30, 2009 (Last Updated 2018/01/29)
 
 # Limitations of Shell Script Loader with integers and associative
 # arrays:
@@ -90,7 +90,7 @@ fi
 
 LOADER_ACTIVE=true
 LOADER_RS=0X
-LOADER_VERSION=0X.2.1
+LOADER_VERSION=0X.2.2
 
 #### PRIVATE VARIABLES ####
 
@@ -551,7 +551,7 @@ function callx {
 		loader_fail "Expressions for directories are not supported: $LOADER_SUBPREFIX" callx "$@"
 		;;
 	/*|./*|../*)
-		[[ -d $LOADER_SUBPREFIX ]] || \loader_fail "Directory not found: $LOADER_SUBPREFIX" callx "$@"
+		[[ -d $LOADER_SUBPREFIX ]] || loader_fail "Directory not found: $LOADER_SUBPREFIX" callx "$@"
 
 		if loader_list "$LOADER_SUBPREFIX"; then
 			local LOADER_R=0
@@ -628,13 +628,14 @@ function loader_finish {
 	loader_reset_flags
 
 	unset -v LOADER_ARGS LOADER_CS LOADER_CS_I LOADER_EXPR \
-		LOADER_FILE_EXPR LOADER_FLAGS LOADER_LIST LOADER_PATHS \
-		LOADER_PATHS_FLAGS LOADER_REGEX_PREFIX LOADER_TEST_OPT
+			LOADER_FILE_EXPR LOADER_FLAGS LOADER_LIST LOADER_PATHS \
+			LOADER_PATHS_FLAGS LOADER_REGEX_PREFIX LOADER_TEST_OPT
 
 	unset -f load include call loadx includex callx loader_addpath \
-		loader_addpath_ loader_fail loader_finish loader_flag \
-		loader_flag_ loader_flagged loader_getcleanpath loader_list \
-		loader_load loader_reset loader_reset_flags loader_reset_paths
+			loader_addpath_ loader_fail loader_finish loader_flag \
+			loader_flag_ loader_flagged loader_getcleanpath \
+			loader_list loader_load loader_reset loader_reset_flags \
+			loader_reset_paths
 }
 
 #### PRIVATE FUNCTIONS ####
@@ -735,7 +736,7 @@ else
 		v=${1//./_dt_}
 		v=${v// /_sp_}
 		v=${v//\//_sl_}
-		v=LOADER_FLAGS_${v//[^[:alnum:]_]/_ot_}
+		v=LOADER_FLAGS_${v//[![:alnum:]_]/_ot_}
 		eval "$v=."
 	}
 
@@ -744,7 +745,7 @@ else
 		v=${1//./_dt_}
 		v=${v// /_sp_}
 		v=${v//\//_sl_}
-		v=LOADER_FLAGS_${v//[^[:alnum:]_]/_ot_}
+		v=LOADER_FLAGS_${v//[![:alnum:]_]/_ot_}
 		[[ -n ${!v} ]]
 	}
 

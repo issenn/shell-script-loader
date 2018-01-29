@@ -13,11 +13,11 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader Extended version 0X (RS0X).
 #
-# Version: 0X.2.1
+# Version: 0X.2.2
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 30, 2009 (Last Updated 2018/01/22)
+# Aug. 30, 2009 (Last Updated 2018/01/29)
 
 # Limitations of Shell Script Loader in PD KSH:
 #
@@ -68,7 +68,7 @@ fi
 
 LOADER_ACTIVE=true
 LOADER_RS=0X
-LOADER_VERSION=0X.2.1
+LOADER_VERSION=0X.2.2
 
 #### PRIVATE VARIABLES ####
 
@@ -647,7 +647,7 @@ callx() {
 }
 
 loader_addpath() {
-	for __ in "$@"; do
+	for __; do
 		[[ -d $__ ]] || loader_fail "Directory not found: $__" loader_addpath "$@"
 		[[ -x $__ ]] || loader_fail "Directory not accessible: $__" loader_addpath "$@"
 		[[ -r $__ ]] || loader_fail "Directory not searchable: $__" loader_addpath "$@"
@@ -680,38 +680,19 @@ loader_finish() {
 	loader_reset_flags
 
 	unset -v LOADER_ABS_PREFIX LOADER_ARGS LOADER_CS LOADER_CS_I \
-		LOADER_EXPR LOADER_FILE_EXPR LOADER_FLAGS LOADER_KSH_VERSION \
-		LOADER_LIST LOADER_LIST_I LOADER_OWD LOADER_PATHS \
-		LOADER_PATHS_FLAGS LOADER_R LOADER_REGEX_PREFIX \
-		LOADER_SHIFTS_0 LOADER_SHIFTS_1 LOADER_SUBPREFIX LOADER_TEST_OPT
+			LOADER_EXPR LOADER_FILE_EXPR LOADER_FLAGS \
+			LOADER_KSH_VERSION LOADER_LIST LOADER_LIST_I LOADER_OWD \
+			LOADER_PATHS LOADER_PATHS_FLAGS LOADER_R \
+			LOADER_REGEX_PREFIX LOADER_SHIFTS_0 LOADER_SHIFTS_1 \
+			LOADER_SUBPREFIX LOADER_TEST_OPT
 
 	unset -f load include call loadx includex callx loader_addpath \
-		loader_fail loader_flag loader_flag_ loader_flagged \
-		loader_getcleanpath loader_getcleanpath_ loader_list \
-		loader_load loader_load_s loader_reset loader_finish
+			loader_fail loader_flag loader_flag_ loader_flagged \
+			loader_getcleanpath loader_list loader_load loader_load_s \
+			loader_reset loader_finish
 }
 
 #### PRIVATE FUNCTIONS ####
-
-loader_getcleanpath() {
-	case $1 in
-	.|'')
-		__=$PWD
-		;;
-	/)
-		__=/
-		;;
-	..|../*|*/..|*/../*|./*|*/.|*/./*|*//*)
-		loader_getcleanpath_ "$1"
-		;;
-	/*)
-		__=${1%/}
-		;;
-	*)
-		__=${PWD%/}/${1%/}
-		;;
-	esac
-}
 
 loader_load() {
 	loader_flag_ "$__"
@@ -852,40 +833,42 @@ else
 
 	if [[ $LOADER_SHELL == mksh ]]; then
 		loader_flag_() {
-			typeset v=${1//./_dt_}
+			typeset v
+			v=${1//./_dt_}
 			v=${v// /_sp_}
 			v=${v//\//_sl_}
-			v=LOADER_FLAGS_${v//[!a-zA-Z0-9_]/_ot_}
+			v=LOADER_FLAGS_${v//[!A-Za-z0-9_]/_ot_}
 			typeset -n r=$v
 			r=.
 		}
 
 		loader_flagged() {
-			typeset v=${1//./_dt_}
+			typeset v
+			v=${1//./_dt_}
 			v=${v// /_sp_}
 			v=${v//\//_sl_}
-			v=LOADER_FLAGS_${v//[!a-zA-Z0-9_]/_ot_}
+			v=LOADER_FLAGS_${v//[!A-Za-z0-9_]/_ot_}
 			typeset -n r=$v
 			[[ -n $r ]]
 		}
 	else
-		hash sed
-
 		loader_flag_() {
-			eval "LOADER_FLAGS_$(echo "$1" | sed 's/\./_dt_/g; s/\//_sl_/g; s/ /_sp_/g; s/[^[:alnum:]_]/_ot_/g')=."
+			typeset v
+			v=$(echo "$1" | sed 's/\./_dt_/g; s/ /_sp_/g; s/\//_sl_/g; s/[^A-Za-z0-9_]/_ot_/g') || exit 1
+			eval "LOADER_FLAGS_$v=."
 		}
 
 		loader_flagged() {
-			eval "[[ -n \$LOADER_FLAGS_$(echo "$1" | sed 's/\./_dt_/g; s/\//_sl_/g; s/ /_sp_/g; s/[^[:alnum:]_]/_ot_/g') ]]"
+			typeset v
+			v=$(echo "$1" | sed 's/\./_dt_/g; s/ /_sp_/g; s/\//_sl_/g; s/[^A-Za-z0-9_]/_ot_/g') || exit 1
+			eval "[[ -n \$LOADER_FLAGS_$v ]]"
 		}
 	fi
 
-	hash grep cut
-
 	loader_reset_flags() {
-		typeset IFS='
-'
-		unset $(set | grep -a ^LOADER_FLAGS_ | cut -f 1 -d =)
+		typeset v IFS=' '
+		v=$(set | awk -F= '/^LOADER_FLAGS_/ { print $1 }' ORS=' ') || exit 1
+		unset $v
 	}
 
 	loader_reset_paths() {
@@ -898,10 +881,10 @@ __='{
 
 	case $1 in
 	/*)
-		__=$1
+		__=${1#/}
 		;;
 	*)
-		__=$PWD/$1
+		__=${PWD#/}/$1
 		;;
 	esac
 
