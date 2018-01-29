@@ -18,11 +18,11 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader version 0 (RS0).
 #
-# Version: 0.2.1
+# Version: 0.2.2
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# January 18, 2018 (Last Updated 2018/01/22)
+# January 18, 2018 (Last Updated 2018/01/29)
 
 # Limitations of Shell Script Loader with integers and associative
 # arrays:
@@ -261,11 +261,11 @@ function loader_finish {
 	LOADER_ACTIVE=false
 
 	unset -v LOADER_CS LOADER_CS_I LOADER_FLAGS LOADER_PATHS \
-		LOADER_PATHS_FLAGS
+			LOADER_PATHS_FLAGS
 
 	unset -f load include call loader_addpath loader_fail \
-		loader_finish loader_flag loader_getcleanpath loader_load \
-		loader_reset
+			loader_finish loader_flag loader_getcleanpath loader_load \
+			loader_reset
 }
 
 #### PRIVATE FUNCTIONS ####

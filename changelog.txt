@@ -1,4 +1,36 @@
 ------------------
+0.2.2 (2018/01/29)
+------------------
+
+- Improved detection of $PWD and pwd.
+
+- Removed calls to 'hash' and made script exit when calls to external
+  commands like sed, pwd and awk fail.
+
+- Used a single awk instead of using grep and sed for extracting
+  flag variables names.  Since awk can have "ORS=' '", IFS='<newline>'
+  is no longer needed.
+
+- Made some getcleanpath() functions trim first backslash from a raw
+  path before splitting the path.
+
+- Renamed GETCLEANPATH_* variables to LOADER_GCP_*, and included them
+  in loader_reset().
+
+- Renamed GETCLEANPATH_FLAGS to LOADER_GCP_OLD_FLAGS.
+
+- Used ! instead of ^ in pattern substitutions.
+
+- Renamed all other-characters patterns that can't use the 'alnum'
+  character class to '[!A-Za-z0-9_]' or '[^A-Za-z0-9_]' (sed).
+
+- Removed unnecessary 'in "$@"' in 'for' loops.
+
+- Wrote 'for __ do' instead of 'for __<newline>do'.
+
+- Used two tabs for indentation in wrapped commands.
+
+------------------
 0.2.1 (2018/01/22)
 ------------------
 

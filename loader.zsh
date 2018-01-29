@@ -12,11 +12,11 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader version 0 (RS0).
 #
-# Version: 0.2.1
+# Version: 0.2.2
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2018/01/22)
+# Aug. 29, 2009 (Last Updated 2018/01/29)
 
 # Notes:
 #
@@ -77,7 +77,7 @@ fi
 
 typeset -g LOADER_ACTIVE=true
 typeset -g LOADER_RS=0
-typeset -g LOADER_VERSION=0.2.1
+typeset -g LOADER_VERSION=0.2.2
 
 #### PRIVATE VARIABLES ####
 
@@ -239,11 +239,11 @@ function loader_finish {
 	LOADER_ACTIVE=false
 
 	unset -v LOADER_CS LOADER_CS_I LOADER_FLAGS LOADER_PATHS \
-		LOADER_PATHS_FLAGS
+			LOADER_PATHS_FLAGS
 
 	unset -f load include call loader_addpath loader_fail \
-		loader_finish loader_flag loader_getcleanpath loader_load \
-		loader_reset
+			loader_finish loader_flag loader_getcleanpath loader_load \
+			loader_reset
 }
 
 #### PRIVATE FUNCTIONS ####

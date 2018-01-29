@@ -18,11 +18,11 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader version 0 (RS0).
 #
-# Version: 0.2.1
+# Version: 0.2.2
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2018/01/22)
+# Aug. 29, 2009 (Last Updated 2018/01/29)
 
 # Limitations of Shell Script Loader with integers and associative
 # arrays:
@@ -91,7 +91,7 @@ fi
 
 LOADER_ACTIVE=true
 LOADER_RS=0
-LOADER_VERSION=0.2.1
+LOADER_VERSION=0.2.2
 
 #### PRIVATE VARIABLES ####
 
@@ -258,12 +258,12 @@ function loader_finish {
 	loader_reset_flags
 
 	unset -v LOADER_CS LOADER_CS_I LOADER_FLAGS LOADER_PATHS \
-		LOADER_PATHS_FLAGS
+			LOADER_PATHS_FLAGS
 
 	unset -f load include call loader_addpath loader_addpath_ \
-		loader_fail loader_finish loader_flagged loader_flag \
-		loader_flag_ loader_getcleanpath loader_load loader_load \
-		loader_reset_flags loader_reset_paths loader_reset
+			loader_fail loader_finish loader_flagged loader_flag \
+			loader_flag_ loader_getcleanpath loader_load loader_load \
+			loader_reset_flags loader_reset_paths loader_reset
 }
 
 #### PRIVATE FUNCTIONS ####
@@ -364,7 +364,7 @@ else
 		v=${1//./_dt_}
 		v=${v// /_sp_}
 		v=${v//\//_sl_}
-		v=LOADER_FLAGS_${v//[^[:alnum:]_]/_ot_}
+		v=LOADER_FLAGS_${v//[![:alnum:]_]/_ot_}
 		eval "$v=."
 	}
 
@@ -373,7 +373,7 @@ else
 		v=${1//./_dt_}
 		v=${v// /_sp_}
 		v=${v//\//_sl_}
-		v=LOADER_FLAGS_${v//[^[:alnum:]_]/_ot_}
+		v=LOADER_FLAGS_${v//[![:alnum:]_]/_ot_}
 		[[ -n ${!v} ]]
 	}
 

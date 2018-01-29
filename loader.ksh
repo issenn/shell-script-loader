@@ -13,11 +13,11 @@
 # This script complies with the Requiring Specifications of
 # Shell Script Loader version 0 (RS0)
 #
-# Version: 0.2.1
+# Version: 0.2.2
 #
 # Author: konsolebox
 # Copyright Free / Public Domain
-# Aug. 29, 2009 (Last Updated 2018/01/22)
+# Aug. 29, 2009 (Last Updated 2018/01/29)
 
 # Limitations of Shell Script Loader in PD KSH:
 #
@@ -68,7 +68,7 @@ fi
 
 LOADER_ACTIVE=true
 LOADER_RS=0
-LOADER_VERSION=0.2.1
+LOADER_VERSION=0.2.2
 
 #### PRIVATE VARIABLES ####
 
@@ -200,7 +200,7 @@ call() {
 }
 
 loader_addpath() {
-	for __ in "$@"; do
+	for __; do
 		[[ -d $__ ]] || loader_fail "Directory not found: $__" loader_addpath "$@"
 		[[ -x $__ ]] || loader_fail "Directory not accessible: $__" loader_addpath "$@"
 		[[ -r $__ ]] || loader_fail "Directory not searchable: $__" loader_addpath "$@"
@@ -355,7 +355,7 @@ else
 			v=${1//./_dt_}
 			v=${v// /_sp_}
 			v=${v//\//_sl_}
-			v=LOADER_FLAGS_${v//[!a-zA-Z0-9_]/_ot_}
+			v=LOADER_FLAGS_${v//[!A-Za-z0-9_]/_ot_}
 			typeset -n r=$v
 			r=.
 		}
@@ -365,28 +365,28 @@ else
 			v=${1//./_dt_}
 			v=${v// /_sp_}
 			v=${v//\//_sl_}
-			v=LOADER_FLAGS_${v//[!a-zA-Z0-9_]/_ot_}
+			v=LOADER_FLAGS_${v//[!A-Za-z0-9_]/_ot_}
 			typeset -n r=$v
 			[[ -n $r ]]
 		}
 	else
-		hash sed
-
 		loader_flag_() {
-			eval "LOADER_FLAGS_$(echo "$1" | sed 's/\./_dt_/g; s/\//_sl_/g; s/ /_sp_/g; s/[^[:alnum:]_]/_ot_/g')=."
+			typeset v
+			v=$(echo "$1" | sed 's/\./_dt_/g; s/ /_sp_/g; s/\//_sl_/g; s/[^A-Za-z0-9_]/_ot_/g') || exit 1
+			eval "LOADER_FLAGS_$v=."
 		}
 
 		loader_flagged() {
-			eval "[[ -n \$LOADER_FLAGS_$(echo "$1" | sed 's/\./_dt_/g; s/\//_sl_/g; s/ /_sp_/g; s/[^[:alnum:]_]/_ot_/g') ]]"
+			typeset v
+			v=$(echo "$1" | sed 's/\./_dt_/g; s/ /_sp_/g; s/\//_sl_/g; s/[^A-Za-z0-9_]/_ot_/g') || exit 1
+			eval "[[ -n \$LOADER_FLAGS_$v ]]"
 		}
 	fi
 
-	hash grep cut
-
 	loader_reset_flags() {
-		typeset IFS='
-'
-		unset $(set | grep -a ^LOADER_FLAGS_ | cut -f 1 -d =)
+		typeset v IFS=' '
+		v=$(set | awk -F= '/^LOADER_FLAGS_/ { print $1 }' ORS=' ') || exit 1
+		unset $v
 	}
 
 	loader_reset_paths() {
@@ -399,10 +399,10 @@ __='{
 
 	case $1 in
 	/*)
-		__=$1
+		__=${1#/}
 		;;
 	*)
-		__=$PWD/$1
+		__=${PWD#/}/$1
 		;;
 	esac
 
